@@ -105,6 +105,11 @@ public:
         request = nil;
     }
     
+    void loadSkipped() {
+        state = Loaded;
+        request = nil;
+    }
+    
 protected:
     State state;
 
@@ -174,16 +179,24 @@ public:
         int frame = 0;
         for (MaplyRemoteTileInfoNew *frameInfo in frameInfos) {
             MaplyTileID tileID;  tileID.level = ident.level;  tileID.x = ident.x;  tileID.y = ident.y;
-            MaplyTileFetchRequest *request = frames[frame]->setupFetch([frameInfo fetchInfoForTile:tileID],frameInfo,0,ident.importance * loader.importanceScale);
-            
-            request.success = ^(MaplyTileFetchRequest *request, NSData *data) {
-                [loader fetchRequestSuccess:request tileID:tileID frame:frame data:data];
-            };
-            request.failure = ^(MaplyTileFetchRequest *request, NSError *error) {
-                [loader fetchRequestFail:request tileID:tileID frame:frame error:error];
-            };
-            [toStart addObject:request];
-
+            id fetchInfo = [frameInfo fetchInfoForTile:tileID];
+            if (fetchInfo) {
+                MaplyTileFetchRequest *request = frames[frame]->setupFetch(fetchInfo,frameInfo,1,ident.importance * loader.importanceScale);
+                
+                // We need all the min levels to display a a frame, so bump this up a bit
+                if (tileID.level == loader->minLevel)
+                    request.priority = request.priority - 1;
+        
+                request.success = ^(MaplyTileFetchRequest *request, NSData *data) {
+                    [loader fetchRequestSuccess:request tileID:tileID frame:frame data:data];
+                };
+                request.failure = ^(MaplyTileFetchRequest *request, NSError *error) {
+                    [loader fetchRequestFail:request tileID:tileID frame:frame error:error];
+                };
+                [toStart addObject:request];
+            } else {
+                frames[frame]->loadSkipped();
+            }
             frame++;
         }
         
@@ -763,7 +776,6 @@ using namespace WhirlyKit;
         if (self.debugMode)
             NSLog(@"Unloading tile %d: (%d,%d)",ident.level,ident.x,ident.y);
         
-        ChangeSet changes;
         it->second->clear(toCancel, changes);
 
         tiles.erase(it);
@@ -914,7 +926,7 @@ using namespace WhirlyKit;
             } while (outFrame.texID == EmptyIdentity);
 
             // Metrics for overall loading used by the display side
-            if (outFrame.texID == EmptyIdentity) {
+            if (outFrame.texID == EmptyIdentity && inFrame->getState() != QIFFrameAsset::Loaded) {
                 if (tile->getIdent().level == minLevel)
                     newRenderState.topTilesLoaded[frameID] = false;
             } else {
@@ -924,6 +936,13 @@ using namespace WhirlyKit;
         
         newRenderState.tiles[tileID] = tileState;
     }
+    
+//    if (true) {
+//        std::string outStr = "";
+//        for (int fi=0;fi<numFrames;fi++)
+//            outStr += newRenderState.topTilesLoaded[fi] ? " 1" : " 0";
+//        NSLog(@"MaplyQuadImageLoader topLoaded: %s",outStr.c_str());
+//    }
     
     auto mergeReq = new RunBlockReq([self,newRenderState](Scene *scene,WhirlyKitSceneRendererES *renderer,WhirlyKitView *view)
                                           {
@@ -1052,33 +1071,10 @@ using namespace WhirlyKit;
         auto tile = it->second;
         auto loadedTile = [builder getLoadedTile:ident];
 
-        // We consider it worth loading
-        if ([self shouldLoad:ident]) {
-            // If it isn't loaded, then start that process
-            if (tile->getState() == QIFTileAsset::Waiting) {
-                if (self.debugMode)
-                    NSLog(@"Tile switched from Wait to Fetch %d: (%d,%d) importance = %f",ident.level,ident.x,ident.y,ident.importance);
-                tile->startFetching(self, toStart, frameInfos);
-                if (loadedTile)
-                    tile->setShouldEnable(loadedTile->enabled);
-                somethingChanged = true;
-            }
-        } else {
-            // We don't consider it worth loading now so drop it if we were
-            switch (tile->getState())
-            {
-                case QIFTileAsset::Waiting:
-                    tile->setImportance(tileFetcher, ident.importance);
-                    if (loadedTile)
-                        tile->setShouldEnable(loadedTile->enabled);
-                    somethingChanged = true;
-                    break;
-                case QIFTileAsset::Active:
-                    tile->clear(toCancel, changes);
-                    somethingChanged = true;
-                    break;
-            }
-        }
+        tile->setImportance(tileFetcher, ident.importance);
+
+        // Note: We used to have some convoluted importance logic here.  Didn't work out.
+        somethingChanged = true;
     }
     
     [tileFetcher cancelTileFetches:toCancel];
