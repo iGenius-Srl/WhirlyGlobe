@@ -23,17 +23,21 @@ import android.app.Activity;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import org.apache.commons.io.IOUtils;
+//import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 public class MaplyStarModel {
@@ -115,7 +119,10 @@ public class MaplyStarModel {
                 Matcher m;
                 try {
                     inputStream = assetMgr.open("maplystarmodel/" + path);
-                    String stars = IOUtils.toString(inputStream, Charset.defaultCharset());
+
+                    Scanner s =  new Scanner(inputStream).useDelimiter("\\A");
+                    String stars = s.hasNext() ? s.next() : "";//IOUtils.toString(inputStream, Charset.defaultCharset());
+
                     Pattern p = Pattern.compile("[-]?[0-9]*\\.?[0-9]+");
                     m = p.matcher(stars);
                 } finally {

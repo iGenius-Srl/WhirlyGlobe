@@ -28,7 +28,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
-import org.apache.commons.io.IOUtils;
+//import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -140,7 +140,7 @@ public class MultiplexTileSource implements QuadImageTileLayer.TileSource
                     cacheFile = new File(locFile);
                     if (cacheFile.exists()) {
                         BufferedInputStream aBufferedInputStream = new BufferedInputStream(new FileInputStream(cacheFile));
-			byte[] rawImage = IOUtils.toByteArray(aBufferedInputStream);
+			byte[] rawImage = new byte[aBufferedInputStream.available()];//IOUtils.toByteArray(aBufferedInputStream);
 
 			bm = bitmapFromRaw(rawImage);
 

@@ -6,7 +6,6 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
-import org.apache.commons.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -344,7 +343,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
                     if (locFile != null) {
                         cacheFile = new File(locFile);
                         if (cacheFile.exists()) {
-                            tileData = FileUtils.readFileToByteArray(cacheFile);
+                            tileData = new byte[(int)cacheFile.length()];//FileUtils.readFileToByteArray(cacheFile);
                             if (debugOutput) {
                                 if (tileData != null)
                                     Log.d("Maply", "Read cached file for tile " + tileID.level + ": (" + tileID.x + "," + tileID.y + ")");
