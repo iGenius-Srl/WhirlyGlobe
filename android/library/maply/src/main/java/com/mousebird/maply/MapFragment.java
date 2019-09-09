@@ -1,15 +1,16 @@
 package com.mousebird.maply;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.fragment.app.Fragment;
+
 /**
  * The MapFragment implements a 2D map with gestures and such.
  */
-public class MapFragment extends Fragment 
+public class MapFragment extends Fragment
 {
 	// Handles drawing, interaction, and so forth for Maply
 	public MapController mapControl = null;
