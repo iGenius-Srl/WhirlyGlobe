@@ -3,17 +3,19 @@ package com.mousebirdconsulting.autotester;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Debug;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.ActionMenuItemView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.os.Handler;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.menu.ActionMenuItemView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 import com.mousebirdconsulting.autotester.Fragments.TestListFragment;
 import com.mousebirdconsulting.autotester.Fragments.ViewTestFragment;
@@ -112,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawer.
 		setSupportActionBar(toolbar);
 
 		//Add home button
-		android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+		ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 			actionBar.setDisplayShowTitleEnabled(true);
