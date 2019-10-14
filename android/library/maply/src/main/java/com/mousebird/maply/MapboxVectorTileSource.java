@@ -2,10 +2,7 @@ package com.mousebird.maply;
 
 import android.util.Log;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-
+import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -19,13 +16,20 @@ import java.util.HashMap;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
+import static com.mousebird.maply.utils.OkHttpUtils.cancel;
+
 /**
  * The MapboxVectorTiles class is used to load Mapbox format vector tiles
  * on demand over a certain area.  You'll need to use this in combination with
  * a QuadPagingLayer.
  */
-public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
-{
+public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface {
     MaplyBaseController controller;
     OkHttpClient client;
     MapboxTileSource mbTiles = null;
@@ -44,16 +48,14 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     /**
      * Construct with a initialized MBTilesSource.  This version reads from a local database.
      */
-    public MapboxVectorTileSource(MapboxTileSource dataSource,VectorStyleInterface inVecStyleFactor)
-    {
+    public MapboxVectorTileSource(MapboxTileSource dataSource, VectorStyleInterface inVecStyleFactor) {
         mbTiles = dataSource;
         coordSys = mbTiles.getCoordSystem();
         tileParser = new MapboxVectorTileParser();
         vecStyleFactory = inVecStyleFactor;
     }
 
-    public MapboxVectorTileSource(MaplyBaseController baseController,RemoteTileInfo inTileInfo,VectorStyleInterface inVecStyleFactor)
-    {
+    public MapboxVectorTileSource(MaplyBaseController baseController, RemoteTileInfo inTileInfo, VectorStyleInterface inVecStyleFactor) {
         controller = baseController;
         client = baseController.getHttpClient();
         tileInfo = inTileInfo;
@@ -67,8 +69,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     /**
      * Minimum zoom level supported.
      */
-    public int minZoom()
-    {
+    public int minZoom() {
         if (mbTiles != null)
             return mbTiles.getMinZoom();
         else
@@ -78,8 +79,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     /**
      * Maximum zoom level supported.
      */
-    public int maxZoom()
-    {
+    public int maxZoom() {
         if (mbTiles != null)
             return mbTiles.getMaxZoom();
         else
@@ -89,8 +89,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     static double MAX_EXTENT = 20037508.342789244;
 
     // Convert to spherical mercator directly
-    Point2d toMerc(Point2d pt)
-    {
+    Point2d toMerc(Point2d pt) {
         Point2d newPt = new Point2d();
         newPt.setValue(Math.toDegrees(pt.getX()) * MAX_EXTENT / 180.0,
                 3189068.5 * Math.log((1.0 + Math.sin(pt.getY())) / (1.0 - Math.sin(pt.getY()))));
@@ -99,8 +98,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     }
 
     // Process data returned from an MBTiles file or network request
-    boolean processData(final QuadPagingLayer layer,final MaplyTileID tileID,byte[] tileData)
-    {
+    boolean processData(final QuadPagingLayer layer, final MaplyTileID tileID, byte[] tileData) {
         ArrayList<ComponentObject> tileCompObjs = new ArrayList<ComponentObject>();
 
         if (tileData != null) {
@@ -181,8 +179,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
             layer.tileDidLoad(tileID);
 
             // Explicitly dispose of vector objects for efficiency
-            if (disposeAfterRemoval)
-            {
+            if (disposeAfterRemoval) {
                 for (VectorObject vecObj : dataObjs.vectorObjects)
                     vecObj.dispose();
             }
@@ -195,11 +192,11 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
 
     /**
      * Used internally to start fetching data.
-     * @param layer The quad paging layer asking you to start fetching.
+     *
+     * @param layer  The quad paging layer asking you to start fetching.
      * @param tileID The tile to start fetching
      */
-    public void startFetchForTile(final QuadPagingLayer layer,final MaplyTileID tileID)
-    {
+    public void startFetchForTile(final QuadPagingLayer layer, final MaplyTileID tileID) {
         // It's a local MBTiles file
         if (mbTiles != null) {
             LayerThread thread = layer.maplyControl.getWorkingThread();
@@ -217,43 +214,37 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
             });
         } else {
             if (debugOutput)
-                Log.d("Maply","Starting fetch for tile " + tileID.level + ": (" + tileID.x + "," + tileID.y + ")");
+                Log.d("Maply", "Starting fetch for tile " + tileID.level + ": (" + tileID.x + "," + tileID.y + ")");
 
             // Form the tile URL
-            int maxY = 1<<tileID.level;
+            int maxY = 1 << tileID.level;
             int remoteY = maxY - tileID.y - 1;
-            final URL tileURL = tileInfo.buildURL(tileID.x,remoteY,tileID.level);
+            final URL tileURL = tileInfo.buildURL(tileID.x, remoteY, tileID.level);
 
             String cacheFile = null;
             if (cacheDir != null)
                 cacheFile = cacheDir.getAbsolutePath() + tileInfo.buildCacheName(tileID.x, tileID.y, tileID.level);
-            ConnectionTask task = new ConnectionTask(layer,this,tileID,tileURL,cacheFile);
+            ConnectionTask task = new ConnectionTask(layer, this, tileID, tileURL, cacheFile);
             task.fetchTile();
         }
     }
 
-    HashMap<MaplyTileID,ConnectionTask> tasks = new HashMap<MaplyTileID,ConnectionTask>();
+    HashMap<MaplyTileID, ConnectionTask> tasks = new HashMap<MaplyTileID, ConnectionTask>();
 
-    ConnectionTask getTask(MaplyTileID tileID)
-    {
-        synchronized (tasks)
-        {
+    ConnectionTask getTask(MaplyTileID tileID) {
+        synchronized (tasks) {
             return tasks.get(tileID);
         }
     }
 
-    void addTask(MaplyTileID tileID,ConnectionTask task)
-    {
-        synchronized (tasks)
-        {
-            tasks.put(tileID,task);
+    void addTask(MaplyTileID tileID, ConnectionTask task) {
+        synchronized (tasks) {
+            tasks.put(tileID, task);
         }
     }
 
-    void removeTask(MaplyTileID tileID)
-    {
-        synchronized (tasks)
-        {
+    void removeTask(MaplyTileID tileID) {
+        synchronized (tasks) {
             tasks.remove(tileID);
         }
     }
@@ -261,8 +252,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     /**
      * Notification that a tile unloaded.
      */
-    public void tileDidUnload(MaplyTileID tileID)
-    {
+    public void tileDidUnload(MaplyTileID tileID) {
         ConnectionTask task = getTask(tileID);
 
         if (task != null) {
@@ -272,16 +262,14 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     }
 
     // Called when the layer shuts down
-    public void clear()
-    {
-        synchronized (this)
-        {
+    public void clear() {
+        synchronized (this) {
             if (client != null)
-                client.cancel(NET_TAG);
 
-            synchronized (tasks)
-            {
-                HashMap<MaplyTileID,ConnectionTask> theTasks = (HashMap<MaplyTileID,ConnectionTask>)tasks.clone();
+                cancel(client, NET_TAG);
+
+            synchronized (tasks) {
+                HashMap<MaplyTileID, ConnectionTask> theTasks = (HashMap<MaplyTileID, ConnectionTask>) tasks.clone();
                 for (ConnectionTask task : theTasks.values())
                     task.clear();
             }
@@ -308,26 +296,23 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
      *
      * @param inCacheDir Cache directory for image tiles.
      */
-    public void setCacheDir(File inCacheDir)
-    {
+    public void setCacheDir(File inCacheDir) {
         cacheDir = inCacheDir;
     }
 
     // Connection task fetches the image
-    private class ConnectionTask implements com.squareup.okhttp.Callback
-    {
+    private class ConnectionTask implements Callback {
         MapboxVectorTileSource tileSource = null;
         QuadPagingLayer layer = null;
         MaplyTileID tileID = null;
         URL url = null;
         String locFile = null;
-        public com.squareup.okhttp.Call call;
+        public Call call;
         byte[] tileData = null;
         File cacheFile = null;
         boolean isCanceled = false;
 
-        ConnectionTask(QuadPagingLayer inLayer,MapboxVectorTileSource inTileSource, MaplyTileID inTileID,URL inURL,String inFile)
-        {
+        ConnectionTask(QuadPagingLayer inLayer, MapboxVectorTileSource inTileSource, MaplyTileID inTileID, URL inURL, String inFile) {
             layer = inLayer;
             tileSource = inTileSource;
             tileID = inTileID;
@@ -343,7 +328,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
                     if (locFile != null) {
                         cacheFile = new File(locFile);
                         if (cacheFile.exists()) {
-                            tileData = new byte[(int)cacheFile.length()];//FileUtils.readFileToByteArray(cacheFile);
+                            tileData = new byte[(int) cacheFile.length()];//FileUtils.readFileToByteArray(cacheFile);
                             if (debugOutput) {
                                 if (tileData != null)
                                     Log.d("Maply", "Read cached file for tile " + tileID.level + ": (" + tileID.x + "," + tileID.y + ")");
@@ -369,12 +354,13 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
                 }
             } catch (Exception e) {
                 if (debugOutput)
-                    Log.e("Maply","Exception while trying to fetch the tile: " + e.toString());
+                    Log.e("Maply", "Exception while trying to fetch the tile: " + e.toString());
             }
         }
 
         // Callback from OK HTTP on tile loading failure
-        public void onFailure(Request request, IOException e) {
+        @Override
+        public void onFailure(@NotNull Call call, @NotNull IOException e) {
             // Ignore cancels
             if (e.getLocalizedMessage().contains("Canceled"))
                 return;
@@ -393,7 +379,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
             try {
                 tileData = response.body().bytes();
 
-                if (processData(layer,tileID,tileData)) {
+                if (processData(layer, tileID, tileData)) {
                     // Save to cache
                     if (cacheFile != null && tileData != null) {
                         OutputStream fOut;
@@ -411,9 +397,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
                         Log.e("Maply", "Response for failed image decode: " + response.toString());
                     }
                 }
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 Log.e("Maply", "Fetched remote file for tile " + tileID.level + ": (" + tileID.x + "," + tileID.y + ")" + " because: " + e.toString());
             }
 
@@ -447,12 +431,10 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
             clear();
         }
 
-        void clear()
-        {
+        void clear() {
             removeTask(tileID);
 
-            synchronized (this)
-            {
+            synchronized (this) {
                 tileSource = null;
                 layer = null;
                 url = null;
@@ -460,6 +442,12 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
                 call = null;
                 cacheFile = null;
             }
+        }
+
+
+        @Override
+        public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+
         }
     }
 }
