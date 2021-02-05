@@ -25,12 +25,7 @@ import com.mousebird.maply.*
 import com.mousebirdconsulting.autotester.Framework.MaplyTestCase
 import kotlin.math.PI
 
-class VectorHoleTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity) {
-        setTestName("Vectors with Holes")
-        implementation = TestExecutionImplementation.Both
-    }
+class VectorHoleTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     fun buildVector(control: BaseController) : ComponentObject {
         val geoJSON = """
@@ -905,5 +900,10 @@ class VectorHoleTestCase : MaplyTestCase {
         buildVector(globeVC!!)
 
         return true
+    }
+
+    init {
+        setTestName("Vectors with Holes")
+        implementation = TestExecutionImplementation.Both
     }
 }

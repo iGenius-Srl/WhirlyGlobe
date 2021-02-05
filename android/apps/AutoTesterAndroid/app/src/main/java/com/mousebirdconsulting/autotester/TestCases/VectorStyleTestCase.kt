@@ -37,12 +37,7 @@ import java.util.*
 /**
  * Loads the USA geojon and applies a simple style.
  */
-class VectorStyleTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity) {
-        setTestName("Vector Style Test")
-        implementation = TestExecutionImplementation.Both
-    }
+class VectorStyleTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     fun setupOverlay(control: BaseController) {
         val stream = getActivity().assets.open("country_json_50m/USA.geojson")
@@ -76,5 +71,10 @@ class VectorStyleTestCase : MaplyTestCase {
     }
 
     private val MBTILES_DIR = "mbtiles"
+
+    init {
+        setTestName("Vector Style Test")
+        implementation = TestExecutionImplementation.Both
+    }
 
 }

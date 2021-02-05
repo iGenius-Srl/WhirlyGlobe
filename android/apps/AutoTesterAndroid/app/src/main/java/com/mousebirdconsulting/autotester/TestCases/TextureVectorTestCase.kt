@@ -32,12 +32,7 @@ import java.util.*
 import kotlin.math.PI
 import kotlin.math.abs
 
-class TextureVectorTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity) {
-        setTestName("Textured Vectors")
-        implementation = TestExecutionImplementation.Both
-    }
+class TextureVectorTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     // Grid size to use for clipping
     // Smaller is going to be more triangles, but look better
@@ -51,7 +46,7 @@ class TextureVectorTestCase : MaplyTestCase {
         val assetMgr = getActivity().assets
         val paths = assetMgr.list("country_json_50m")!!
 
-        var tessObjs = ArrayList<VectorObject>()
+        val tessObjs = ArrayList<VectorObject>()
 
         // Load in 20 contries to apply a texture to
         var count = 0
@@ -132,5 +127,10 @@ class TextureVectorTestCase : MaplyTestCase {
         buildCountries(globeVC!!)
 
         return true
+    }
+
+    init {
+        setTestName("Textured Vectors")
+        implementation = TestExecutionImplementation.Both
     }
 }

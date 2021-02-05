@@ -35,7 +35,7 @@ class ShapesTestCase(activity: Activity) : MaplyTestCase(activity) {
     init {
         setTestName("Shape Test Case")
         setDelay(1000)
-        this.implementation = MaplyTestCase.TestExecutionImplementation.Globe
+        this.implementation = TestExecutionImplementation.Globe
     }
 
     @Throws(Exception::class)
@@ -48,7 +48,7 @@ class ShapesTestCase(activity: Activity) : MaplyTestCase(activity) {
         return true
     }
 
-    private inner class LocationInfo(internal var name: String, internal var x: Double, internal var y: Double)
+    private inner class LocationInfo(var name: String, var x: Double, var y: Double)
 
     private fun addShapes(viewC: BaseController) {
         val locations = ArrayList<LocationInfo>()

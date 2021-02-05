@@ -12,13 +12,7 @@ import kotlin.concurrent.timer
 /**
  * Find Height just tests the findHeight logic for the globe and map.
  */
-class FindHeightTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity)
-    {
-        setTestName("Find Height")
-        implementation = TestExecutionImplementation.Both
-    }
+class FindHeightTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     // Run a findHeight
     fun runDelayedFind(vc: BaseController) {
@@ -60,5 +54,10 @@ class FindHeightTestCase : MaplyTestCase {
         runDelayedFind(globeVC!!)
 
         return true
+    }
+
+    init {
+        setTestName("Find Height")
+        implementation = TestExecutionImplementation.Both
     }
 }

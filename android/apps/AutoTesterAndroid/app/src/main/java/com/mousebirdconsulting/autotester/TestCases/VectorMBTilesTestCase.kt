@@ -35,12 +35,7 @@ import java.io.IOException
 /**
  * Loads vector tiles over southern France.
  */
-class VectorMBTilesTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity) {
-        setTestName("Vector MBTiles")
-        implementation = TestExecutionImplementation.Both
-    }
+class VectorMBTilesTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     var loader: QuadLoaderBase? = null
 
@@ -219,6 +214,11 @@ class VectorMBTilesTestCase : MaplyTestCase {
     // Switch maps on long press
     override fun userDidLongPress(mapController: MapController?, selObjs: Array<SelectedObject?>?, loc: Point2d?, screenLoc: Point2d?) {
         loader?.reload()
+    }
+
+    init {
+        setTestName("Vector MBTiles")
+        implementation = TestExecutionImplementation.Both
     }
 
 }

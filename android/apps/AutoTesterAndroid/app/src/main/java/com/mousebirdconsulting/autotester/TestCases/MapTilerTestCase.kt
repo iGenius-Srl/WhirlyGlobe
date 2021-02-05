@@ -3,16 +3,11 @@ package com.mousebirdconsulting.autotester.TestCases
 import android.app.Activity
 import android.net.Uri
 import com.mousebird.maply.*
-import com.mousebirdconsulting.autotester.ConfigOptions
 import com.mousebirdconsulting.autotester.Framework.MaplyTestCase
 import okio.Okio
 import java.io.IOException
 
-class MapTilerTestCase : MaplyTestCase {
-    constructor(activity: Activity) : super(activity) {
-        setTestName("MapTiler")
-        implementation = TestExecutionImplementation.Both
-    }
+class MapTilerTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     var map: MapboxKindaMap? = null
 
@@ -20,7 +15,7 @@ class MapTilerTestCase : MaplyTestCase {
     private fun setupLoader(control: BaseController, whichMap: Int) {
         // Third map is no map
         if (whichMap > 1)
-            return;
+            return
 
         val mapName = if (whichMap == 0) "maptiler_basic.json" else "maptiler_streets.json"
 
@@ -75,6 +70,11 @@ class MapTilerTestCase : MaplyTestCase {
         setupLoader(baseViewC!!, currentMap)
 
         return true
+    }
+
+    init {
+        setTestName("MapTiler")
+        implementation = TestExecutionImplementation.Both
     }
 
 }

@@ -7,12 +7,7 @@ import com.mousebirdconsulting.autotester.Framework.MaplyTestCase
 import okio.Okio
 import java.nio.charset.Charset
 
-class LoftedPolyTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity) {
-        setTestName("Lofted Polys")
-        implementation = TestExecutionImplementation.Both
-    }
+class LoftedPolyTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     fun addLoftedPolysSpain(vc: BaseController) {
         val stream = getActivity().assets.open("country_json_50m/ESP.geojson")
@@ -45,5 +40,10 @@ class LoftedPolyTestCase : MaplyTestCase {
         addLoftedPolysSpain(mapVC!!)
 
         return true
+    }
+
+    init {
+        setTestName("Lofted Polys")
+        implementation = TestExecutionImplementation.Both
     }
 }

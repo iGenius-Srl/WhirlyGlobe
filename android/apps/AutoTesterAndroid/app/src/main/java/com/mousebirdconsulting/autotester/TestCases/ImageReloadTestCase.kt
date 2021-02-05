@@ -29,42 +29,37 @@ import com.mousebirdconsulting.autotester.Framework.MaplyTestCase
 /**
  * This tests loading one image layer and then switching to another.
  */
-class ImageReloadTestCase : MaplyTestCase {
+class ImageReloadTestCase(activity: Activity) : MaplyTestCase(activity) {
 
-    constructor(activity: Activity) : super(activity)
-    {
-        setTestName("Image Reload")
-        implementation = TestExecutionImplementation.Both
-    }
-
-    var loader : QuadImageLoader? = null
+    var loader: QuadImageLoader? = null
     val maxZoom = 16
-    var handler : Handler? = null
+    var handler: Handler? = null
 
-    fun setupImageLoader(control: BaseController,testType: ConfigOptions.TestType) {
+    fun setupImageLoader(control: BaseController, testType: ConfigOptions.TestType) {
         // Where we're getting the tile from
         val tileInfo = RemoteTileInfoNew("http://tile.stamen.com/watercolor/{z}/{x}/{y}.png",
                 0, maxZoom)
 
         // Sampling params define how the globe is broken up, including the depth
-        var params = SamplingParams()
-        params.coordSystem = SphericalMercatorCoordSystem()
-        if (testType == ConfigOptions.TestType.GlobeTest) {
-            params.coverPoles = true
-            params.edgeMatching = true
+        val params = SamplingParams().apply {
+            coordSystem = SphericalMercatorCoordSystem()
+            if (testType == ConfigOptions.TestType.GlobeTest) {
+                coverPoles = true
+                edgeMatching = true
+            }
+            singleLevel = true
+            minZoom = tileInfo.minZoom
+            maxZoom = tileInfo.maxZoom
         }
-        params.singleLevel = true
-        params.minZoom = tileInfo.minZoom
-        params.maxZoom = tileInfo.maxZoom
 
-        loader = QuadImageLoader(params,tileInfo,control)
+        loader = QuadImageLoader(params, tileInfo, control)
         val theLoader = loader
 
         handler = Handler(getActivity().mainLooper)
-        handler?.postDelayed(Runnable {
+        handler?.postDelayed({
             val newTileInfo = RemoteTileInfoNew("http://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png", 0, maxZoom)
             theLoader?.changeTileInfo(newTileInfo)
-        }, 10*1000)
+        }, 10 * 1000)
 
     }
 
@@ -78,5 +73,10 @@ class ImageReloadTestCase : MaplyTestCase {
         setupImageLoader(globeVC!!, ConfigOptions.TestType.GlobeTest)
 
         return true
+    }
+
+    init {
+        setTestName("Image Reload")
+        implementation = TestExecutionImplementation.Both
     }
 }

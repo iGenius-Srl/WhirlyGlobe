@@ -26,12 +26,7 @@ import com.mousebirdconsulting.autotester.ConfigOptions
 import com.mousebirdconsulting.autotester.Framework.MaplyTestCase
 import java.io.File
 
-class OpenMapTilesHybridTestCase : MaplyTestCase {
-
-    constructor(activity: Activity) : super(activity) {
-        setTestName("OpenMapTiles Hybrid")
-        implementation = TestExecutionImplementation.Both
-    }
+class OpenMapTilesHybridTestCase(activity: Activity) : MaplyTestCase(activity) {
 
     var loader: QuadImageLoader? = null
     var interp: MapboxVectorInterpreter? = null
@@ -51,18 +46,19 @@ class OpenMapTilesHybridTestCase : MaplyTestCase {
         tileInfo.cacheDir = cacheDir
 
         // Sampling params define how the globe is broken up, including the depth
-        var params = SamplingParams()
-        params.coordSystem = SphericalMercatorCoordSystem()
-        params.singleLevel = true
-        params.minZoom = tileInfo.minZoom
-        params.maxZoom = tileInfo.maxZoom
-        if (testType == ConfigOptions.TestType.GlobeTest) {
-            params.coverPoles = true
-            params.edgeMatching = true
+        val params = SamplingParams().apply {
+            coordSystem = SphericalMercatorCoordSystem()
+            singleLevel = true
+            minZoom = tileInfo.minZoom
+            maxZoom = tileInfo.maxZoom
+            if (testType == ConfigOptions.TestType.GlobeTest) {
+                coverPoles = true
+                edgeMatching = true
+            }
         }
 
         // Need a standalone renderer
-        tileRenderer = RenderController(512,512)
+        tileRenderer = RenderController(512, 512)
 
         // Style sheets for image and overlay
         // TODO: Filter out the polygons
@@ -73,7 +69,7 @@ class OpenMapTilesHybridTestCase : MaplyTestCase {
         interp = MapboxVectorInterpreter(polyStyleGen, tileRenderer, lineStyleGen, control)
 
         // Finally the loader asks for tiles
-        loader = QuadImageLoader(params,tileInfo,control)
+        loader = QuadImageLoader(params, tileInfo, control)
         loader?.setLoaderInterpreter(interp)
     }
 
@@ -87,5 +83,10 @@ class OpenMapTilesHybridTestCase : MaplyTestCase {
         setupLoader(mapVC!!, ConfigOptions.TestType.MapTest)
 
         return true
+    }
+
+    init {
+        setTestName("OpenMapTiles Hybrid")
+        implementation = TestExecutionImplementation.Both
     }
 }
