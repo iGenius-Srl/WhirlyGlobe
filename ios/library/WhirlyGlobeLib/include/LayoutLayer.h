@@ -3,7 +3,7 @@
  *  WhirlyGlobeLib
  *
  *  Created by Steve Gifford on 12/4/12.
- *  Copyright 2011-2017 mousebird consulting. All rights reserved.
+ *  Copyright 2011-2019 mousebird consulting.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@
 @property (nonatomic,assign) int maxDisplayObjects;
 
 /// Initialize with the renderer (for screen size)
-- (id)initWithRenderer:(WhirlyKitSceneRendererES *)renderer;
+- (id)initWithRenderer:(WhirlyKit::SceneRenderer *)renderer;
 
 /// Called in the layer thread
 - (void)startWithThread:(WhirlyKitLayerThread *)layerThread scene:(WhirlyKit::Scene *)scene;
@@ -51,5 +51,8 @@
 
 /// Stop tracking a bunch of objects.  We assume they're removed elsewhere.
 - (void)removeLayoutObjects:(const WhirlyKit::SimpleIDSet &)objectIDs;
+
+/// Schedule an update ASAP
+- (void)scheduleUpdateNow;
 
 @end
