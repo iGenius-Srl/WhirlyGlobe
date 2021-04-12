@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/testNameLabel"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:layout_margin="10dp"
         android:textSize="18dp"/>
     <View
@@ -24,44 +24,44 @@
         android:id="@+id/map_icon"
         android:src="@drawable/ic_map_interactive"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:visibility="invisible"
-        android:layout_marginRight="60dp"/>
+        android:layout_marginEnd="60dp"/>
     <ImageView
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:id="@+id/globe_icon"
         android:src="@drawable/ic_globe_interactive"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:visibility="invisible"
-        android:layout_marginRight="10dp"/>
+        android:layout_marginEnd="10dp"/>
     <ImageView
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:id="@+id/itemSelected"
         android:src="@drawable/ic_action_selectall"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:visibility="invisible"
-        android:layout_marginRight="10dp"/>
+        android:layout_marginEnd="10dp"/>
     <ImageView
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:id="@+id/retryDownload"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:visibility="invisible"
-        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
         android:src="@drawable/ic_assignment_returned_black_24dp"/>
     <ImageView
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:id="@+id/downloading"
         android:layout_centerVertical="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
         android:visibility="invisible"
-        android:layout_marginRight="10dp"
+        android:layout_marginEnd="10dp"
         android:src="@drawable/ic_download"/>
 
 </RelativeLayout>

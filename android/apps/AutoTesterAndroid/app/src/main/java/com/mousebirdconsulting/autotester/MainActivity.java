@@ -3,17 +3,20 @@ package com.mousebirdconsulting.autotester;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Debug;
-import android.support.v4.app.Fragment;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.view.menu.ActionMenuItemView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.os.Handler;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.menu.ActionMenuItemView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
 
 import com.mousebirdconsulting.autotester.Fragments.TestListFragment;
 import com.mousebirdconsulting.autotester.Fragments.ViewTestFragment;
@@ -112,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawer.
 		setSupportActionBar(toolbar);
 
 		//Add home button
-		android.support.v7.app.ActionBar actionBar = getSupportActionBar();
+	ActionBar actionBar = getSupportActionBar();
 		if (actionBar != null) {
 			actionBar.setDisplayHomeAsUpEnabled(true);
 			actionBar.setDisplayShowTitleEnabled(true);
@@ -278,15 +281,19 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawer.
 	@Override
 	public void onItemClick(int itemId) {
 		switch (itemId){
+
 			case R.id.selectAll:
 				testList.changeItemsState(true);
 				drawerLayout.closeDrawer(GravityCompat.START);
 				break;
-			case R.id.deselectAll:
+
+				case R.id.deselectAll:
 				testList.changeItemsState(false);
 				drawerLayout.closeDrawer(GravityCompat.START);
 				break;
+
 			case R.id.runInteractive:
+			case R.id.runSingle:
 				showOverflowMenu(false);
 				onResume();
 				break;
@@ -295,19 +302,14 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawer.
 				showOverflowMenu(true);
 				onResume();
 				break;
-
-			case R.id.runSingle:
-				showOverflowMenu(false);
-				onResume();
-				break;
 		}
 
 		navigationDrawer.setSelectedItemId(itemId);
 	}
 
 	private void runTests() {
-		ActionMenuItemView playButton = (ActionMenuItemView) findViewById(R.id.playTests);
-		playButton.setIcon(getResources().getDrawable(R.drawable.ic_stop_action));
+		ActionMenuItemView playButton =  findViewById(R.id.playTests);
+		playButton.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_stop_action));
 		getSupportActionBar().setTitle("Running tests...");
 		this.testResults.clear();
 		ArrayList<MaplyTestCase> tests = this.testList.getTests();
@@ -382,7 +384,7 @@ public class MainActivity extends AppCompatActivity implements NavigationDrawer.
 
 	private void finishTests() {
 		ActionMenuItemView playButton = (ActionMenuItemView) findViewById(R.id.playTests);
-		playButton.setIcon(getResources().getDrawable(R.drawable.ic_play_action));
+		playButton.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_play_action));
 		getSupportActionBar().setTitle(R.string.app_name);
 		executing = false;
 		this.viewTest = new ViewTestFragment();
