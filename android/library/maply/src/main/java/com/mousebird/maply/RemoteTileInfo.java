@@ -1,6 +1,5 @@
 package com.mousebird.maply;
 
-import com.squareup.okhttp.Request;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -9,6 +8,8 @@ import org.json.JSONObject;
 import java.net.URL;
 import java.util.ArrayList;
 
+import okhttp3.Request;
+
 /**
  * The RemoteTileInfo class holds the contact info associated with a remote tile source.
  * This includes base URLs, min and max zoom levels and other info needed construct full URLs.
@@ -16,7 +17,7 @@ import java.util.ArrayList;
  */
 public class RemoteTileInfo
 {
-	public ArrayList<String> baseURLs = new ArrayList<String>();
+	public ArrayList<String> baseURLs = new ArrayList<>();
 	public String ext = null;
 	public int minZoom = 0;
 	public int maxZoom = 0;
@@ -121,7 +122,7 @@ public class RemoteTileInfo
 	 * Construct the actual Request from the URL.
 	 * If you need to mess with the HTTP request headers, override this method.
      */
-	public Request buildRequest(URL url,Object OkHTTP_TAG)
+	public Request buildRequest(URL url, Object OkHTTP_TAG)
 	{
 		if (OkHTTP_TAG == null)
 			return new Request.Builder().url(url).build();

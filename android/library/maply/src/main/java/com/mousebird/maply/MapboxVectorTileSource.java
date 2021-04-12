@@ -2,10 +2,7 @@ package com.mousebird.maply;
 
 import android.util.Log;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-
+import androidx.annotation.NonNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,8 +13,15 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * The MapboxVectorTiles class is used to load Mapbox format vector tiles
@@ -276,8 +280,15 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     {
         synchronized (this)
         {
-            if (client != null)
-                client.cancel(NET_TAG);
+            if (client != null) {
+                List<Call> callList = client.dispatcher().queuedCalls();
+
+                for (Call call : callList) {
+                    if (call.request().tag().equals(NET_TAG))
+                        call.cancel();
+                }
+
+            }
 
             synchronized (tasks)
             {
@@ -314,14 +325,14 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
     }
 
     // Connection task fetches the image
-    private class ConnectionTask implements com.squareup.okhttp.Callback
+    private class ConnectionTask implements Callback
     {
         MapboxVectorTileSource tileSource = null;
         QuadPagingLayer layer = null;
         MaplyTileID tileID = null;
         URL url = null;
         String locFile = null;
-        public com.squareup.okhttp.Call call;
+        public Call call;
         byte[] tileData = null;
         File cacheFile = null;
         boolean isCanceled = false;
@@ -374,7 +385,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
         }
 
         // Callback from OK HTTP on tile loading failure
-        public void onFailure(Request request, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
             // Ignore cancels
             if (e.getLocalizedMessage().contains("Canceled"))
                 return;
@@ -386,7 +397,7 @@ public class MapboxVectorTileSource implements QuadPagingLayer.PagingInterface
         }
 
         // Callback from OK HTTP on success
-        public void onResponse(Response response) {
+        public void onResponse(@NonNull Call call, @NonNull Response response) {
             if (isCanceled)
                 return;
 

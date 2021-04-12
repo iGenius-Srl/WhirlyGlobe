@@ -23,9 +23,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.util.Log;
 
-import com.squareup.okhttp.OkHttpClient;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
+import androidx.annotation.NonNull;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -35,6 +33,13 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.net.URL;
+import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * The remote tile source fetches individual tiles from a remote image basemap
@@ -46,8 +51,8 @@ import java.net.URL;
  */
 public class RemoteTileSource implements QuadImageTileLayer.TileSource
 {
-	MaplyBaseController controller = null;
-	RemoteTileInfo tileInfo = null;
+	MaplyBaseController controller;
+	RemoteTileInfo tileInfo;
 	public CoordSystem coordSys = new SphericalMercatorCoordSystem();
 	OkHttpClient client;
 	Object NET_TAG = new Object();
@@ -75,13 +80,13 @@ public class RemoteTileSource implements QuadImageTileLayer.TileSource
 		 * @param tileSource Tile source that just loaded the tile.
 		 * @param tileID Tile ID
 		 */
-		public void tileDidLoad(Object tileSource,MaplyTileID tileID,int frame);
+		void tileDidLoad(Object tileSource,MaplyTileID tileID,int frame);
 		/**
 		 * Tile failed to load.
 		 * @param tileSource Tile source that failed to load the tile.
 		 * @param tileID Tile ID.
 		 */
-		public void tileDidNotLoad(Object tileSource,MaplyTileID tileID,int frame);
+		void tileDidNotLoad(Object tileSource,MaplyTileID tileID,int frame);
 	}
 	
 	/**
@@ -151,14 +156,14 @@ public class RemoteTileSource implements QuadImageTileLayer.TileSource
 	}
 
 	// Connection task fetches the image
-	private class ConnectionTask implements com.squareup.okhttp.Callback
+	private class ConnectionTask implements Callback
 	{
-		RemoteTileSource tileSource = null;
-		QuadImageTileLayerInterface layer = null;
-		MaplyTileID tileID = null;
-		URL url = null;
-		String locFile = null;
-        com.squareup.okhttp.Call call;
+		RemoteTileSource tileSource;
+		QuadImageTileLayerInterface layer;
+		MaplyTileID tileID;
+		URL url;
+		String locFile;
+		Call call;
         Bitmap bm = null;
         File cacheFile = null;
         boolean isCanceled = false;
@@ -211,7 +216,7 @@ public class RemoteTileSource implements QuadImageTileLayer.TileSource
         }
 
         // Callback from OK HTTP on tile loading failure
-        public void onFailure(Request request, IOException e) {
+        public void onFailure(@NonNull Call call, @NonNull IOException e) {
 			// Ignore cancels
 			if (e != null) {
 				String mess = e.getLocalizedMessage();
@@ -223,7 +228,7 @@ public class RemoteTileSource implements QuadImageTileLayer.TileSource
         }
 
         // Callback from OK HTTP on success
-        public void onResponse(Response response) {
+        public void onResponse(@NonNull Call call, @NonNull Response response) {
             if (isCanceled)
                 return;
 
@@ -323,10 +328,17 @@ public class RemoteTileSource implements QuadImageTileLayer.TileSource
 	public void clear(QuadImageTileLayerInterface layer)
 	{
 		synchronized (this) {
-			if (client != null)
-				client.cancel(NET_TAG);
+			if (client != null) {
+				List<Call> callList = client.dispatcher().queuedCalls();
 
-			client = null;
+				for (Call call : callList) {
+					if (call.request().tag().equals(NET_TAG))
+						call.cancel();
+				}
+
+				client = null;
+
+			}
 		}
 	}
 }
