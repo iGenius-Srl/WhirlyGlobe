@@ -1,9 +1,8 @@
-/*
- *  ClusteredMarkersTestCase.java
+/*  ClusteredMarkersTestCase.java
  *  WhirlyGlobeLib
  *
  *  Created by jmnavarro
- *  Copyright 2011-2016 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +14,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 package com.mousebirdconsulting.autotester.TestCases;
 
@@ -26,17 +24,19 @@ import android.graphics.BitmapFactory;
 
 import com.mousebird.maply.GlobeController;
 import com.mousebird.maply.MapController;
-import com.mousebird.maply.MaplyBaseController;
+import com.mousebird.maply.BaseController;
 import com.mousebird.maply.MarkerInfo;
 import com.mousebird.maply.Point2d;
+import com.mousebird.maply.RenderController;
 import com.mousebird.maply.ScreenMarker;
 import com.mousebird.maply.VectorObject;
 import com.mousebird.maply.MaplyTexture;
 import com.mousebird.maply.BasicClusterGenerator;
-import com.mousebird.maply.MaplyBaseController.TextureSettings;
+import com.mousebird.maply.RenderController;
 import com.mousebirdconsulting.autotester.Framework.MaplyTestCase;
 import com.mousebirdconsulting.autotester.R;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,36 +70,56 @@ public class ClusteredMarkersTestCase extends MaplyTestCase {
         return true;
     }
 
-    Point2d pos = Point2d.FromDegrees(-3.6704803, 40.5023056);
+    final Point2d pos = Point2d.FromDegrees(-3.6704803, 40.5023056);
 
-    private void insertClusteredMarkers(List<VectorObject> vectors, MaplyBaseController inController) {
-        Point2d size = new Point2d(32, 32);
-        List<ScreenMarker> markers = new ArrayList<>();
-        Bitmap icon = BitmapFactory.decodeResource(getActivity().getResources(), R.drawable.sticker);
-        MaplyTexture tex = inController.addTexture(icon,new TextureSettings(),MaplyBaseController.ThreadMode.ThreadCurrent);
+    private void insertClusteredMarkers(List<VectorObject> vectors, BaseController inController) {
+        final Point2d size = new Point2d(32, 32);
+        final List<ScreenMarker> markers = new ArrayList<>(vectors.size());
+        final Bitmap icon = BitmapFactory.decodeResource(getActivity().getResources(), R.drawable.sticker);
+        final MaplyTexture tex = inController.addTexture(icon,new RenderController.TextureSettings(), RenderController.ThreadMode.ThreadCurrent);
 
-//        inController.addClusterGenerator(new BasicClusterGenerator(new int[]{Color.argb(165, 255, 255, 0)}, 1, new Point2d(64, 64), inController, inController.getActivity()));
+        boolean custom = false; // split into two test cases?
+        BasicClusterGenerator generator = custom ? new BasicClusterGenerator(
+                new int[]{
+                        Color.argb(165, 255, 255, 0)
+                },
+                1, new Point2d(64, 64),
+                inController, inController.getActivity()) : null;
+        if (generator != null) {
+            inController.addClusterGenerator(generator);
+        }
 
-        int which = 0;
         for (VectorObject v : vectors) {
-            for (int ii=0;ii<10;ii++) {
+            // Note: Increase this to test capacity
+            for (int ii=0;ii<1;ii++) {
                 ScreenMarker marker = new ScreenMarker();
                 marker.tex = tex;
                 marker.loc = v.centroid();
                 marker.size = size;
                 marker.selectable = true;
+                marker.layoutImportance = ii;
 
                 if (marker.loc != null)
                     markers.add(marker);
             }
-            which++;
         }
 
         MarkerInfo info = new MarkerInfo();
-        info.setLayoutImportance(1.f);
-//        info.setClusterGroup(1);
+        //info.setLayoutImportance(1.f);
+        info.setClusterGroup(1);
         info.setClusterGroup(0);
 
-        inController.addScreenMarkers(markers, info, MaplyBaseController.ThreadMode.ThreadAny);
+        inController.addScreenMarkers(markers, info, RenderController.ThreadMode.ThreadAny);
+
+        if (generator != null) {
+            inController.addPostSurfaceRunnable(() -> {
+                try {
+                    generator.setTextColor(Color.GREEN);
+                    // That wasn't supposed to work!
+                    throw new RuntimeException("failed");
+                } catch (InvalidParameterException ignored) {
+                }
+            });
+        }
     }
 }

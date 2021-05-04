@@ -1,9 +1,8 @@
-/*
- *  CharRenderer.java
+/*  CharRenderer.java
  *  WhirlyGlobeLib
  *
  *  Created by Steve Gifford on 6/2/14.
- *  Copyright 2011-2014 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,7 +14,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
 package com.mousebird.maply;
@@ -46,12 +44,15 @@ class CharRenderer
 	CharRenderer()
 	{		
 	}
-	
+
+	static float FontSizeScale = 2.0f;
+
+	// called from C++ code
 	Glyph renderChar(int charInt,LabelInfo labelInfo,float fontSize)
 	{
 		Paint textFillPaint = new Paint();
 		String str = new String(Character.toChars(charInt));
-		textFillPaint.setTextSize(fontSize);
+		textFillPaint.setTextSize(fontSize * FontSizeScale);
 		int textColor = labelInfo.getTextColor();
 		textFillPaint.setColor(textColor);
 		textFillPaint.setAntiAlias(true);
@@ -70,34 +71,34 @@ class CharRenderer
 
 		//paint for outline
 		Paint textOutlinePaint = null;
-		if(labelInfo.getOutlineSize() > 0) {
+		int outlineSize = (int)(labelInfo.getOutlineSize() * FontSizeScale);
+		if(outlineSize > 0) {
 			textOutlinePaint = new Paint(textFillPaint);
 			textOutlinePaint.setStyle(Paint.Style.STROKE);
-			textOutlinePaint.setStrokeWidth(labelInfo.getOutlineSize());
+			textOutlinePaint.setStrokeWidth(outlineSize);
 			textOutlinePaint.setColor(labelInfo.getOutlineColor());
 			textOutlinePaint.setAntiAlias(true);
 			textOutlinePaint.setTypeface(textFillPaint.getTypeface());
 		}
 
-		Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+		Bitmap bitmap = Bitmap.createBitmap(width+2*outlineSize, height+2*outlineSize, Bitmap.Config.ARGB_8888);
 		bitmap.eraseColor( 0x00000000 );
 		Canvas canvas = new Canvas (bitmap);
 
 		//draw char outline
 		if(textOutlinePaint != null) {
-			canvas.drawText(str, 0, 1, fontPadX, height - fontDescent - fontPadY, textOutlinePaint);
+			canvas.drawText(str, 0, 1, fontPadX + outlineSize, height - fontDescent - fontPadY + outlineSize, textOutlinePaint);
 		}
 
 		//draw char fill
-		canvas.drawText(str, 0, 1, fontPadX, height - fontDescent - fontPadY, textFillPaint);
+		canvas.drawText(str, 0, 1, fontPadX + outlineSize, height - fontDescent - fontPadY + outlineSize, textFillPaint);
 
 		// Send back some useful info
 		Glyph glyph = new Glyph();
 		glyph.bitmap = bitmap;
 		glyph.sizeX = width;  glyph.sizeY = height;
-		glyph.textureOffsetX = 1;  glyph.textureOffsetY = 1;
-		// Note: Porting. Probably not right
-		glyph.offsetX = 0;  glyph.offsetY = 0;
+		glyph.textureOffsetX = 1+outlineSize;  glyph.textureOffsetY = 1+outlineSize;
+		glyph.offsetX = 0;  glyph.offsetY = 1;
 		glyph.glyphSizeX = widths[0];  glyph.glyphSizeY = fontHeight;
 
 //		Log.d("Maply","Rendering char: " + charInt + " sizeX = " + width + " sizeY = " + height);

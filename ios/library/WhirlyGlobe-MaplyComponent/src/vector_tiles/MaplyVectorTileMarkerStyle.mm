@@ -1,9 +1,8 @@
-/*
- *  MaplyVectorMarkerStyle.h
+/*  MaplyVectorMarkerStyle.h
  *  WhirlyGlobe-MaplyComponent
  *
  *  Created by Steve Gifford on 1/3/14.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +14,12 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
-#import "MaplyVectorTileMarkerStyle.h"
-#import "MaplyIconManager.h"
+#import "vector_styles/MaplyVectorTileMarkerStyle.h"
+#import "helpers/MaplyIconManager.h"
+#import "vector_tiles/MapboxVectorTiles.h"
+#import "NSDictionary+Stuff.h"
 
 @interface MaplyVectorTileSubStyleMarker : NSObject
 {
@@ -60,10 +60,10 @@
         MaplyVectorTileSubStyleMarker *subStyle = [[MaplyVectorTileSubStyleMarker alloc] init];
         subStyle->clusterGroup = -1;
         if (styleEntry[@"fill"])
-            subStyle->fillColor = [MaplyVectorTiles ParseColor:styleEntry[@"fill"]];
+            subStyle->fillColor = [MaplyVectorTileStyle ParseColor:styleEntry[@"fill"]];
         subStyle->strokeColor = nil;
         if (styleEntry[@"stroke"])
-            subStyle->strokeColor = [MaplyVectorTiles ParseColor:styleEntry[@"stroke"]];
+            subStyle->strokeColor = [MaplyVectorTileStyle ParseColor:styleEntry[@"stroke"]];
         subStyle->width = inSettings.markerSize;
         if (styleEntry[@"width"])
             subStyle->width = [styleEntry[@"width"] floatValue];
@@ -116,7 +116,7 @@
           
             if(!subStyle->markerImage)
             {
-              subStyle->markerImage = [MaplyIconManager iconForName:fileName
+              subStyle->markerImage = [MaplySimpleStyleManager iconForName:fileName
                                                                size:CGSizeMake(settings.markerScale*subStyle->width+2,
                                                                                settings.markerScale*subStyle->height+2)
                                                               color:[UIColor blackColor]
@@ -135,9 +135,22 @@
     return self;
 }
 
-- (NSArray *)buildObjects:(NSArray *)vecObjs forTile:(MaplyVectorTileInfo *)tileInfo viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC;
-{    
-    bool isRetina = [UIScreen mainScreen].scale > 1.0;
+- (void)buildObjects:(NSArray *)vecObjs
+             forTile:(MaplyVectorTileData *)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+{
+    [self buildObjects:vecObjs forTile:tileInfo viewC:viewC desc:extraDesc cancelFn:nil];
+}
+
+/// Construct objects related to this style based on the input data.
+- (void)buildObjects:(NSArray * _Nonnull)vecObjs
+             forTile:(MaplyVectorTileData * __nonnull)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> * _Nonnull)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+            cancelFn:(bool(^__nullable)(void))cancelFn
+{
+    const bool isRetina = [UIScreen mainScreen].scale > 1.0;
 
     // One marker per object
     NSMutableArray *compObjs = [NSMutableArray array];
@@ -150,10 +163,13 @@
             marker.userObject = vec;
             marker.selectable = self.selectable;
             if(subStyle->markerImage)
+            {
                 marker.image = subStyle->markerImage;
-            else {
+            }
+            else
+            {
                 NSString *markerName = [self formatText:subStyle->markerImageTemplate forObject:vec];
-                marker.image =  [MaplyIconManager iconForName:markerName
+                marker.image = [MaplySimpleStyleManager iconForName:markerName
                                                        size:CGSizeMake(settings.markerScale*subStyle->width+2,
                                                                        settings.markerScale*subStyle->height+2)
                                                       color:[UIColor blackColor]
@@ -161,34 +177,44 @@
                                                  strokeSize:settings.markerScale*subStyle->strokeWidth
                                                   strokeColor:subStyle->strokeColor];
                 if ([marker.image isKindOfClass:[NSNull class]])
+                {
                     marker.image = nil;
+                }
             }
 
-            if (marker.image) {
+            if (marker.image)
+            {
                 marker.loc = [vec center];
-                if (subStyle->allowOverlap)
-                    marker.layoutImportance = MAXFLOAT;
-                else
-                    marker.layoutImportance = settings.markerImportance;
+                marker.layoutImportance = (subStyle->allowOverlap) ? MAXFLOAT : settings.markerImportance;
                 marker.selectable = true;
                 if (marker.image)
                 {
-                    marker.size = CGSizeMake(settings.markerScale*subStyle->width, settings.markerScale*subStyle->height);
                     // The markers will be scaled up on a retina display, so compensate
-                    if (isRetina)
-                        marker.size = CGSizeMake(settings.markerScale*subStyle->width/2.0, settings.markerScale*subStyle->height/2.0);
-                } else
+                    marker.size = isRetina ?
+                        CGSizeMake(settings.markerScale*subStyle->width/2.0, settings.markerScale*subStyle->height/2.0) :
+                        CGSizeMake(settings.markerScale*subStyle->width, settings.markerScale*subStyle->height);
+                }
+                else
+                {
                     marker.size = CGSizeMake(settings.markerScale*subStyle->width, settings.markerScale*subStyle->height);
+                }
                 [markers addObject:marker];
             }
         }
 
-        MaplyComponentObject *compObj = [viewC addScreenMarkers:markers desc:subStyle->desc mode:MaplyThreadCurrent];
+        NSDictionary* desc = subStyle->desc ? subStyle->desc : extraDesc;
+        if (subStyle->desc && extraDesc)
+        {
+            [desc dictionaryByMergingWith:extraDesc];
+        }
+        MaplyComponentObject *compObj = [viewC addScreenMarkers:markers desc:desc mode:MaplyThreadCurrent];
         if (compObj)
+        {
             [compObjs addObject:compObj];
+        }
     }
     
-    return compObjs;
+    [tileInfo addComponentObjects:compObjs];
 }
 
 @end

@@ -1,9 +1,8 @@
-/*
- *  SLDPolygonSymbolizer.java
+/*  SLDPolygonSymbolizer.java
  *  WhirlyGlobeLib
  *
  *  Created by Ranen Ghosh on 3/14/17.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,21 +14,18 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 package com.mousebird.maply.sld.sldsymbolizers;
 
-
 import android.graphics.Color;
 import android.graphics.Bitmap;
-import android.util.Log;
 
-import com.mousebird.maply.MaplyBaseController;
+import com.mousebird.maply.RenderController;
+import com.mousebird.maply.RenderControllerInterface;
 import com.mousebird.maply.VectorStyleSettings;
 import com.mousebird.maply.VectorTileLineStyle;
 import com.mousebird.maply.VectorTilePolygonStyle;
 import com.mousebird.maply.VectorTileStyle;
-import com.mousebird.maply.WideVectorInfo;
 import com.mousebird.maply.VectorInfo;
 import com.mousebird.maply.MaplyTexture;
 import com.mousebird.maply.sld.sldstyleset.SLDParseHelper;
@@ -41,10 +37,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 /**
- *
- * Class corresponding to the PolygonSymbolizer element
- * @see http://schemas.opengis.net/se/1.1.0/Symbolizer.xsd for SLD v1.1.0
- * @see http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd for SLD v1.0.0
+ *  Class corresponding to the PolygonSymbolizer element
+ * see http://schemas.opengis.net/se/1.1.0/Symbolizer.xsd for SLD v1.1.0
+ * see http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd for SLD v1.0.0
  */
 public class SLDPolygonSymbolizer extends SLDSymbolizer {
 
@@ -69,7 +64,7 @@ public class SLDPolygonSymbolizer extends SLDSymbolizer {
     }
 
     public VectorTileStyle[] getStyles() {
-        ArrayList<VectorTileStyle> styles = new ArrayList<VectorTileStyle>();
+        ArrayList<VectorTileStyle> styles = new ArrayList<>();
         if (vectorTileLineStyle != null)
             styles.add(vectorTileLineStyle);
         if (vectorTilePolygonStyle != null)
@@ -79,14 +74,12 @@ public class SLDPolygonSymbolizer extends SLDSymbolizer {
 
 
     public static boolean matchesSymbolizerNamed(String symbolizerName) {
-        if (symbolizerName.equals("PolygonSymbolizer"))
-            return true;
-        return false;
+        return symbolizerName.equals("PolygonSymbolizer");
     }
 
     public static VectorTilePolygonStyle vectorTilePolygonStyleFromFillNode(XmlPullParser xpp, SLDSymbolizerParams symbolizerParams) throws XmlPullParserException, IOException {
 
-        MaplyBaseController viewC = symbolizerParams.getBaseController();
+        RenderControllerInterface viewC = symbolizerParams.getBaseController();
         VectorStyleSettings vectorStyleSettings = symbolizerParams.getVectorStyleSettings();
 
         VectorInfo vectorInfo = new VectorInfo();
@@ -126,15 +119,9 @@ public class SLDPolygonSymbolizer extends SLDSymbolizer {
                     continue;
 
                 if (name.equals("fill")) {
-                    try {
-                        fillColor = Integer.valueOf(Color.parseColor(value));
-                    } finally {
-                    }
+                    fillColor = Color.parseColor(value);
                 } else if (name.equals("fill-opacity") || name.equals("opacity")) {
-                    try {
-                        fillOpacity = Float.valueOf(value);
-                    } finally {
-                    }
+                    fillOpacity = Float.valueOf(value);
                 }
 
             } else if (xpp.getName().equals("GraphicFill")) {
@@ -147,9 +134,9 @@ public class SLDPolygonSymbolizer extends SLDSymbolizer {
                         if (graphicParams != null) {
                             Bitmap bmp = graphicParams.getBitmap();
                             if (bmp != null) {
-                                MaplyBaseController.TextureSettings texSettings = new MaplyBaseController.TextureSettings();
+                                RenderController.TextureSettings texSettings = new RenderController.TextureSettings();
                                 texSettings.wrapU = true;  texSettings.wrapV = true;
-                                MaplyTexture tex = viewC.addTexture(graphicParams.getBitmap(), texSettings, MaplyBaseController.ThreadMode.ThreadCurrent);
+                                MaplyTexture tex = viewC.addTexture(graphicParams.getBitmap(), texSettings, RenderController.ThreadMode.ThreadCurrent);
                                 vectorInfo.setTexture(tex);
 
                                 float scaleX = 50000.0f;
@@ -172,16 +159,15 @@ public class SLDPolygonSymbolizer extends SLDSymbolizer {
         }
 
         if (fillColor != null) {
-            int color = fillColor.intValue();
+            int color = fillColor;
             if (fillOpacity != null)
-                color = Color.argb(Math.round(fillOpacity.floatValue()*255.f), Color.red(color), Color.green(color), Color.blue(color));
+                color = Color.argb(Math.round(fillOpacity *255.f), Color.red(color), Color.green(color), Color.blue(color));
 
             vectorInfo.setColor(color);
         }
 
-        vectorInfo.setDrawPriority(symbolizerParams.getRelativeDrawPriority() + MaplyBaseController.FeatureDrawPriorityBase);
-        VectorTilePolygonStyle vectorTilePolygonStyle = new VectorTilePolygonStyle(vectorInfo, vectorStyleSettings, viewC);
-        return vectorTilePolygonStyle;
+        vectorInfo.setDrawPriority(symbolizerParams.getRelativeDrawPriority() + RenderController.FeatureDrawPriorityBase);
+        return new VectorTilePolygonStyle(null,null,vectorInfo, vectorStyleSettings,viewC);
     }
 
 }

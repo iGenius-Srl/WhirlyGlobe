@@ -3,7 +3,7 @@
 //  AutoTester
 //
 //  Created by Ranen Ghosh on 2016-12-06.
-//  Copyright © 2016-2017 mousebird consulting. All rights reserved.
+//  Copyright © 2016-2017 mousebird consulting.
 //
 
 import UIKit
@@ -11,12 +11,13 @@ import UIKit
 class LocationTrackingRealTestCase: MaplyTestCase, MaplyLocationTrackerDelegate {
 
     var segCtrl: UISegmentedControl?
+    
+    var baseLayer : MaplyTestCase? = nil
 
     override init() {
         super.init()
         
         self.name = "Location Tracking Real Test Case"
-        self.captureDelay = 4
         self.implementations = [.globe, .map]
     }
     
@@ -31,12 +32,12 @@ class LocationTrackingRealTestCase: MaplyTestCase, MaplyLocationTrackerDelegate 
         segCtrl?.clipsToBounds = true
         baseVC.view.addSubview(segCtrl!)
         
-        baseVC.startLocationTracking(with: self, useHeading: true, useCourse: true, simulate: false)
+        baseVC.startLocationTracking(with: self, useHeading: true, useCourse: true)
     }
     
     override func setUpWithGlobe(_ globeVC: WhirlyGlobeViewController) {
-        let baseLayer = StamenWatercolorRemote()
-        baseLayer.setUpWithGlobe(globeVC)
+        baseLayer = StamenWatercolorRemote()
+        baseLayer?.setUpWithGlobe(globeVC)
         globeVC.keepNorthUp = false
         
         setupLocationTracking(baseVC: globeVC)
@@ -45,8 +46,8 @@ class LocationTrackingRealTestCase: MaplyTestCase, MaplyLocationTrackerDelegate 
     }
     
     override func setUpWithMap(_ mapVC: MaplyViewController) {
-        let baseLayer = StamenWatercolorRemote()
-        baseLayer.setUpWithMap(mapVC)
+        baseLayer = StamenWatercolorRemote()
+        baseLayer?.setUpWithMap(mapVC)
         
         setupLocationTracking(baseVC: mapVC)
         

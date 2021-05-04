@@ -1,9 +1,8 @@
-/*
- *  MaplyVectorTextStyle.mm
+/*  MaplyVectorTextStyle.mm
  *  WhirlyGlobe-MaplyComponent
  *
  *  Created by Steve Gifford on 1/3/14.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,11 +14,12 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
-#import "MaplyVectorTileTextStyle.h"
-#import "MaplyScreenLabel.h"
+#import "vector_styles/MaplyVectorTileTextStyle.h"
+#import "visual_objects/MaplyScreenLabel.h"
+#import "vector_tiles/MapboxVectorTiles.h"
+#import "NSDictionary+Stuff.h"
 
 typedef enum {
   TextPlacementPoint,
@@ -74,7 +74,7 @@ typedef enum {
         
         UIColor *fillColor = [UIColor blackColor];
         if (styleEntry[@"fill"])
-            fillColor = [MaplyVectorTiles ParseColor:styleEntry[@"fill"] alpha:alpha];
+            fillColor = [MaplyVectorTileStyle ParseColor:styleEntry[@"fill"] alpha:alpha];
         subStyle->textSize = 12.0;
         if (styleEntry[@"size"])
         {
@@ -165,7 +165,7 @@ typedef enum {
         
         UIColor *outlineColor = nil;
         if (styleEntry[@"halo-fill"])
-            outlineColor = [MaplyVectorTiles ParseColor:styleEntry[@"halo-fill"] alpha:alpha];
+            outlineColor = [MaplyVectorTileStyle ParseColor:styleEntry[@"halo-fill"] alpha:alpha];
         float outlineSize = 1.0;
         if (styleEntry[@"halo-radius"])
             outlineSize = [styleEntry[@"halo-radius"] floatValue];
@@ -247,10 +247,23 @@ typedef enum {
     return self;
 }
 
-- (NSArray *)buildObjects:(NSArray *)vecObjs forTile:(MaplyVectorTileInfo *)tileInfo viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC;
+- (void)buildObjects:(NSArray *)vecObjs
+             forTile:(MaplyVectorTileData *)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+{
+    [self buildObjects:vecObjs forTile:tileInfo viewC:viewC desc:extraDesc cancelFn:nil];
+}
+
+/// Construct objects related to this style based on the input data.
+- (void)buildObjects:(NSArray * _Nonnull)vecObjs
+             forTile:(MaplyVectorTileData * __nonnull)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> * _Nonnull)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+            cancelFn:(bool(^__nullable)(void))cancelFn
 {
     MaplyCoordinateSystem *displaySystem = viewC.coordSystem;
-    
+
     NSMutableArray *compObjs = [NSMutableArray array];
     for (MaplyVectorTileSubStyleText *subStyle in subStyles)
     {
@@ -283,31 +296,38 @@ typedef enum {
                 {
                     MaplyCoordinate center = [vec center];
                     label.loc = center;
-                } else if (subStyle->placement == TextPlacementLine)
+                }
+                else if (subStyle->placement == TextPlacementLine)
                 {
                     MaplyCoordinate middle;
                     double rot;
                     if ([vec linearMiddle:&middle rot:&rot displayCoordSys:displaySystem])
                     {
                         //TODO: text-max-char-angle-delta
-                        //TODO: rotation calculation is not ideal, it is between 2 points, but it needs to be avergared over a longer distance
+                        //TODO: rotation calculation is not ideal, it is between 2 points, but it needs to be averaged over a longer distance
                         label.loc = middle;
                         label.layoutPlacement = kMaplyLayoutCenter;
                         label.rotation = -1 * rot+M_PI/2.0;
-                        if(label.rotation > M_PI_2 || label.rotation < -M_PI_2) {
+                        if(label.rotation > M_PI_2 || label.rotation < -M_PI_2)
+                        {
                             label.rotation += M_PI;
                         }
 
                         label.keepUpright = true;
-                    } else {
+                    } else
+                    {
                         label = nil;
                     }
-                } else if(subStyle->placement == TextPlacementVertex)
+                }
+                else if(subStyle->placement == TextPlacementVertex)
                 {
                     MaplyCoordinate vertex;
-                    if([vec middleCoordinate:&vertex]) {
+                    if([vec middleCoordinate:&vertex])
+                    {
                         label.loc = vertex;
-                    } else {
+                    }
+                    else
+                    {
                         label = nil;
                     }
                 }
@@ -321,17 +341,25 @@ typedef enum {
                 }
             }
             if (subStyle->layoutPlacement)
+            {
                 label.layoutPlacement = [subStyle->layoutPlacement intValue];
+            }
         }
 
-        // Note: This should be MaplyThreadCurrent, but...
-        //   We need a GL context present for the text rendering
-        MaplyComponentObject *compObj = [viewC addScreenLabels:labels desc:subStyle->desc mode:MaplyThreadCurrent];
-        if (compObj)
-            [compObjs addObject:compObj];
-    }
+        NSDictionary *desc = subStyle->desc ? subStyle->desc : extraDesc;
+        if (subStyle->desc && extraDesc)
+        {
+            [desc dictionaryByMergingWith:extraDesc];
+        }
 
-    return compObjs;
+        MaplyComponentObject *compObj = [viewC addScreenLabels:labels desc:desc mode:MaplyThreadCurrent];
+        if (compObj)
+        {
+            [compObjs addObject:compObj];
+        }
+    }
+    
+    [tileInfo addComponentObjects:compObjs];
 }
 
 @end

@@ -1,15 +1,28 @@
-//
-//  GeoJSONSource.m
-//  AutoTester
-//
-//  Created by Ranen Ghosh on 2016-11-18.
-//  Copyright © 2016-2017 mousebird consulting. All rights reserved.
-//
+/*  GeoJSONSource.mm
+ *  WhirlyGlobe-MaplyComponent
+ *
+ *  Created by Ranen Ghosh on 2016-11-18.
+ *  Copyright 2016-2021 mousebird consulting
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 
-#import "GeoJSONSource.h"
-#import "SLDStyleSet.h"
+#import <UIKit/UIKit.h>
+#import "loading/GeoJSONSource.h"
+#import "vector_styles/SLDStyleSet.h"
 #import "MaplyVectorObject_private.h"
 #import "VectorData.h"
+#import "Dictionary_NSDictionary.h"
+#import "MapboxVectorTiles_private.h"
 
 using namespace WhirlyKit;
 
@@ -74,6 +87,7 @@ using namespace WhirlyKit;
                 completionBlock();
                 return;
             });
+            return;
         }
         
         self->_styleSet = [[SLDStyleSet alloc] initWithViewC:baseVC useLayerNames:NO relativeDrawPriority:self->_relativeDrawPriority];
@@ -81,8 +95,13 @@ using namespace WhirlyKit;
 
         ShapeSet shapes;
         NSData *geoJSONData = [NSData dataWithContentsOfURL:self->_geoJSONURL];
-        NSString *crs;
-        bool parsed = VectorParseGeoJSON(shapes, geoJSONData, &crs);
+        NSString *nsStr = [[NSString alloc] initWithData:geoJSONData encoding:NSUTF8StringEncoding];
+        if (!nsStr)
+            return;
+        std::string geoJSONStr = [nsStr UTF8String];
+
+        std::string crs;
+        bool parsed = VectorParseGeoJSON(shapes, geoJSONStr, crs);
         
         if (!parsed  || shapes.empty()) {
             dispatch_async(dispatch_get_main_queue(), ^{
@@ -92,18 +111,17 @@ using namespace WhirlyKit;
         }
         
         NSMutableDictionary *featureStyles = [NSMutableDictionary new];
-        MaplyVectorTileInfo *tileInfo = [[MaplyVectorTileInfo alloc] init];
         MaplyBoundingBoxD geoBBox;
+        MaplyBoundingBoxD bbox {{0,0},{0,0}};
         geoBBox.ll.x = -M_PI;  geoBBox.ll.y = -M_PI/2.0;
         geoBBox.ur.x = M_PI; geoBBox.ur.y = M_PI/2.0;
-        tileInfo.geoBBox = geoBBox;
-        tileInfo.tileID = {0, 0, 0};
-        NSMutableArray *compObjs = [NSMutableArray array];
-        
+        MaplyTileID tileID = {0,0,0};
+        MaplyVectorTileData *tileInfo = [[MaplyVectorTileData alloc] initWithID:tileID bbox:bbox geoBBox:geoBBox];
+
         for (ShapeSet::iterator it = shapes.begin(); it != shapes.end(); ++it) {
             
-            NSMutableDictionary *attributes = (*it)->getAttrDict();
-            
+            NSMutableDictionary *attributes = ((iosMutableDictionary *)(*it)->getAttrDict().get())->dict;
+
             NSMutableArray *vectorObjs = [NSMutableArray array];
             
             VectorPointsRef points = std::dynamic_pointer_cast<VectorPoints>(*it);
@@ -126,33 +144,32 @@ using namespace WhirlyKit;
             if (!styles || styles.count == 0)
                 continue;
             
+            SimpleIDSet styleIDs;
             for(NSObject<MaplyVectorStyle> *style in styles) {
-                NSMutableArray *featuresForStyle = featureStyles[style.uuid];
+                NSMutableArray *featuresForStyle = featureStyles[@(style.uuid)];
                 if(!featuresForStyle) {
                     featuresForStyle = [NSMutableArray new];
-                    featureStyles[style.uuid] = featuresForStyle;
+                    featureStyles[@(style.uuid)] = featuresForStyle;
                 }
                 [featuresForStyle addObjectsFromArray:vectorObjs];
             }
+            iosMutableDictionaryRef attrDict(new iosMutableDictionary(attributes));
             for (MaplyVectorObject *vecObj in vectorObjs) {
-                vecObj.attributes = attributes;
+                vecObj->vObj->setAttributes(attrDict);
             }
-            
         }
-        
-        
         
         NSArray *symbolizerKeys = [featureStyles.allKeys sortedArrayUsingDescriptors:@[[NSSortDescriptor sortDescriptorWithKey:@"self" ascending:YES]]];
         dispatch_async(dispatch_get_main_queue(), ^{
             
             for(id key in symbolizerKeys) {
-                NSObject<MaplyVectorStyle> *symbolizer = [self->_styleSet styleForUUID:key viewC:baseVC];
+                NSObject<MaplyVectorStyle> *symbolizer = [self->_styleSet styleForUUID:[key longValue] viewC:baseVC];
                 NSArray *features = featureStyles[key];
-                [compObjs addObjectsFromArray:[symbolizer buildObjects:features forTile:tileInfo viewC:baseVC]];
+                [symbolizer buildObjects:features forTile:tileInfo viewC:baseVC desc:nil];
             }
-            
-            self->_compObjs = compObjs;
-            [baseVC enableObjects:compObjs mode:MaplyThreadAny];
+
+            self->_compObjs = [tileInfo componentObjects];
+            [baseVC enableObjects:self->_compObjs mode:MaplyThreadCurrent];
             self->_loaded = true;
             self->_enabled = true;
             completionBlock();

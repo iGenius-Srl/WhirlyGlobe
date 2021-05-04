@@ -1,9 +1,8 @@
-/*
- *  MaplyVectorLineStyle.mm
+/*  MaplyVectorLineStyle.mm
  *  WhirlyGlobe-MaplyComponent
  *
  *  Created by Steve Gifford on 1/3/14.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +14,15 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
 #import <vector>
-#import "MaplyVectorTileLineStyle.h"
-#import "MaplyTexture.h"
-#import "MaplyTextureBuilder.h"
-#import <WhirlyGlobe.h>
+#import "vector_styles/MaplyVectorTileLineStyle.h"
+#import "visual_objects/MaplyTexture.h"
+#import "helpers/MaplyTextureBuilder.h"
+#import <WhirlyGlobe_iOS.h>
+#import "vector_tiles/MapboxVectorTiles.h"
+#import "NSDictionary+Stuff.h"
 
 // Line styles
 @implementation MaplyVectorTileStyleLine
@@ -56,7 +56,7 @@
         }
         if (styleEntry[@"stroke"])
         {
-            strokeColor = [MaplyVectorTiles ParseColor:styleEntry[@"stroke"] alpha:alpha];
+            strokeColor = [MaplyVectorTileStyle ParseColor:styleEntry[@"stroke"] alpha:alpha];
         }
         
         int drawPriority = 0;
@@ -89,34 +89,38 @@
                 if (componentStrings.count == 1)
                     componentStrings = [styleEntry[@"stroke-dasharray"] componentsSeparatedByString:@" "];
                 NSMutableArray *componentNumbers = [NSMutableArray arrayWithCapacity:componentStrings.count];
-                for(NSString *s in componentStrings) {
-                    int n = [s intValue] * settings.dashPatternScale;
+                for(const NSString *s in componentStrings) {
+                    const int n = [s intValue] * settings.dashPatternScale;
                     patternLength += n;
                     if(n > 0) {
                         [componentNumbers addObject:@(n)];
                     }
                 }
                 dashComponents = componentNumbers;
-                
+
                 // We seem to need powers of two for some devices.  Not totally clear on why.
                 repeatLen = patternLength;
-                patternLength = WhirlyKit::NextPowOf2(patternLength);
             } else  {
                 patternLength = 32;
                 repeatLen = patternLength;
                 dashComponents = @[@(patternLength)];
             }
-            
-            int width = settings.lineScale * strokeWidth;
+
+            // Apply the scale and truncate to integer.
+            // TODO: round instead of truncate?
+            int width = (int)(settings.lineScale * strokeWidth);
+
             // Width needs to be a bit bigger for falloff at edges to work
+            // TODO: maybe not needed any more?
             if (width < 1)
                 width = 1;
+
             // For odd sizes, we'll expand by 2, even 1
             if (width & 0x1)
                 width += 2;
             else
                 width += 1;
-                
+
             MaplyLinearTextureBuilder *lineTexBuilder = [[MaplyLinearTextureBuilder alloc] init];
             [lineTexBuilder setPattern:dashComponents];
             UIImage *lineImage = [lineTexBuilder makeImage];
@@ -147,34 +151,64 @@
     return self;
 }
 
-- (NSArray *)buildObjects:(NSArray *)vecObjs forTile:(MaplyVectorTileInfo *)tileInfo viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC;
+- (void)buildObjects:(NSArray *)vecObjs
+             forTile:(MaplyVectorTileData *)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+{
+    [self buildObjects:vecObjs forTile:tileInfo viewC:viewC desc:extraDesc cancelFn:nil];
+}
+
+/// Construct objects related to this style based on the input data.
+- (void)buildObjects:(NSArray * _Nonnull)vecObjs
+             forTile:(MaplyVectorTileData * __nonnull)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> * _Nonnull)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+            cancelFn:(bool(^__nullable)(void))cancelFn
 {
     MaplyComponentObject *baseWideObj = nil;
     MaplyComponentObject *baseRegObj = nil;
     NSMutableArray *compObjs = [NSMutableArray array];
     int which = 0;
-    for (NSDictionary *desc in subStyles)
+    for (__strong NSDictionary *desc in subStyles)
     {
+        if (extraDesc)
+        {
+            desc = [desc dictionaryByMergingWith:extraDesc];
+        }
+
         MaplyComponentObject *compObj = nil;
         if (wideVecs[which])
         {
-            if (!baseWideObj) {
+            if (!baseWideObj)
+            {
                 baseWideObj = compObj = [viewC addWideVectors:vecObjs desc:desc mode:MaplyThreadCurrent];
-            } else
+            }
+            else
+            {
                 compObj = [viewC instanceVectors:baseWideObj desc:desc mode:MaplyThreadCurrent];
-        } else {
-            if (!baseRegObj) {
+            }
+        }
+        else
+        {
+            if (!baseRegObj)
+            {
                 baseRegObj = compObj = [viewC addVectors:vecObjs desc:desc mode:MaplyThreadCurrent];
-            } else
+            }
+            else
+            {
                 compObj = [viewC instanceVectors:baseRegObj desc:desc mode:MaplyThreadCurrent];
+            }
         }
 
         if (compObj)
+        {
             [compObjs addObject:compObj];
+        }
         which++;
     }
     
-    return compObjs;
+    [tileInfo addComponentObjects:compObjs];
 }
 
 @end

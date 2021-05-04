@@ -1,9 +1,8 @@
-/*
- *  MaplyVectorTileStyle.java
+/*  MaplyVectorTileStyle.java
  *  WhirlyGlobeLib
  *
  *  Created by Ranen Ghosh on 3/27/17.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,14 +14,13 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
 package com.mousebird.maply;
 
 
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -32,32 +30,23 @@ import java.util.HashMap;
  */
 public abstract class VectorTileStyle implements VectorStyle {
 
-    protected boolean geomAdditive;
-    protected String uuid;
-    protected WeakReference<MaplyBaseController> viewC;
-    protected boolean selectable;
+    @Override
+    public long getUuid() { return uuid; }
 
-    static long uuidCount = 0;
+    @Override
+    public boolean geomIsAdditive() { return geomAdditive; }
 
-    public String getUuid() {
-        return uuid;
-    }
+    @Override
+    public String getCategory() { return category; }
 
-    public boolean geomIsAdditive() {
-        return geomAdditive;
-    }
+    @Override
+    public String getIdent() { return ident; }
 
-    static synchronized long makeUUID()
-    {
-        uuidCount++;
 
-        return uuidCount;
-    }
-
-    public VectorTileStyle(MaplyBaseController viewC) {
-        this.viewC = new WeakReference<MaplyBaseController>(viewC);
-
-        uuid = "" + makeUUID();
+    public VectorTileStyle(String ident,String category,RenderControllerInterface viewC) {
+        this.ident = ident;
+        this.category = category;
+        this.viewC = new WeakReference<>(viewC);
 
 //        if (((String)styleEntry.get("tilegeom")).equals("add"))
 //            geomAdditive = true;
@@ -65,5 +54,14 @@ public abstract class VectorTileStyle implements VectorStyle {
 //        selectable = ((Boolean)styleEntry.get("?")).booleanValue();
     }
 
+    protected boolean geomAdditive;
+    protected boolean selectable;
+    protected String ident;
+    protected String category;
 
+    final protected WeakReference<RenderControllerInterface> viewC;
+
+    final protected long uuid = uuidCount.incrementAndGet();
+
+    static final AtomicLong uuidCount = new AtomicLong(0);
 }

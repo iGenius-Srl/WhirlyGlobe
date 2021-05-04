@@ -3,7 +3,7 @@
  *  WhirlyGlobe-MaplyComponent
  *
  *  Created by Steve Gifford on 9/19/12.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -77,11 +77,18 @@ extern NSString* const kMaplyZBufferRead;
 extern NSString* const kMaplyZBufferWrite;
 /// Set the render target if the given geometry type supports it
 extern NSString* const kMaplyRenderTarget;
+/// The the UUID of the object
+extern NSString* const kMaplyUUID;
+/// The representation of the UUID this object embodies
+extern NSString* const kMaplyRepresentation;
 
 /// Assign a shader program to a particular feature.  Use the shader program's name
 extern NSString* const kMaplyShader;
 /// An NSDictionary containing uniforms to apply to a shader before drawing
 extern NSString* const kMaplyShaderUniforms;
+
+/// Keep drawing for this number of frames after we'd normally stop
+extern NSString* const kMaplyExtraFrames;
 
 /// Stars, moon, stars, atmosphere
 extern const int kMaplyStarsDrawPriorityDefault;
@@ -155,6 +162,15 @@ extern NSString* const kMaplyTextJustifyLeft;
 /// Justify text to the center
 extern NSString* const kMaplyTextJustifyCenter;
 
+/// Controls how text is laid out along a line or polygon.  Set a number (- for left or inside, + for right or outside)
+extern NSString* const kMaplyTextLayoutOffset;
+/// If laying out along a line (or polygon), the amount of screen space to leave between labels
+extern NSString* const kMaplyTextLayoutSpacing;
+/// Layout as many labels as possible along a line (or polygon).  Set a number (0 for no repeat, -1 for as many as possible, or a number of instances)
+extern NSString* const kMaplyTextLayoutRepeat;
+/// Turn on debugging lines for the layout engine
+extern NSString* const kMaplyTextLayoutDebug;
+
 /// These are used for screen and regular markers.
 extern NSString* const kMaplyClusterGroup;
 
@@ -173,6 +189,8 @@ extern NSString* const kMaplyFilled;
 
 /// If set, the texture to apply to the feature
 extern NSString* const kMaplyVecTexture;
+/// The format of the image given by kMaplyVecTexture, default MaplyImage4Layer8Bit
+extern NSString* const kMaplyVecTextureFormat;
 /// X scale for textures applied to vectors
 extern NSString* const kMaplyVecTexScaleX;
 /// Y scale for textures applied to vectors
@@ -184,6 +202,8 @@ extern NSString* const kMaplyVecTextureProjection;
 extern NSString* const kMaplyProjectionTangentPlane;
 /// Screen space "projection" for texture coordinates
 extern NSString* const kMaplyProjectionScreen;
+/// No projection for texture coordinates
+extern NSString* const kMaplyProjectionNone;
 
 /// If set to true we'll centered any drawables we create for features
 /// This fixes the jittering problem when zoomed in close
@@ -200,6 +220,12 @@ extern NSString* const kMaplyWideVecCoordType;
 extern NSString* const kMaplyWideVecCoordTypeReal;
 /// Widened vectors are widened in screen space.  The width is in pixels.
 extern NSString* const kMaplyWideVecCoordTypeScreen;
+
+/// Controls the wide vector implementation.  Basic implementation by default.
+extern NSString* const kMaplyWideVecImpl;
+
+/// Performance implementation of the wide vectors
+extern NSString* const kMaplyWideVecImplPerf;
 
 /// For wide vectors we can control the line joins
 /// See: http://www.w3.org/TR/SVG/painting.html#StrokeLinejoinProperty
@@ -236,12 +262,17 @@ extern NSString* const kMaplyWideVecMiterLimit;
 /// It's real world coordinates for kMaplyWideVecCoordTypeReal and pixel size for kMaplyWideVecCoordTypeScreen
 extern NSString* const kMaplyWideVecTexRepeatLen;
 
+/// Offset to left (negative) or right (positive) of the centerline
+extern NSString* const kMaplyWideVecOffset;
+
 /// If set we'll break up a vector feature to the given epsilon on a globe surface
 extern NSString* const kMaplySubdivEpsilon;
 /// If subdiv epsilon is set we'll look for a subdivision type. Default is simple.
 extern NSString* const kMaplySubdivType;
 /// Subdivide the vector edges along a great circle
 extern NSString* const kMaplySubdivGreatCircle;
+/// Subdivide the vector edges along a great circle with ellipsoidal math
+extern NSString* const kMaplySubdivGreatCirclePrecise;
 /// Subdivide into a fixed number of segmenets
 extern NSString* const kMaplySubdivStatic;
 /// Subdivide the vectors edges along lat/lon
@@ -328,15 +359,19 @@ extern NSString* const kMaplyMinFilterLinear;
 extern NSString* const kMaplyTexAtlas;
 extern NSString* const kMaplyTexWrapX;
 extern NSString* const kMaplyTexWrapY;
+extern NSString* const kMaplyTexMipmap;
 
 /// These are the various shader programs we set up by default
 extern NSString* const kMaplyShaderDefaultTri;
 extern NSString* const kMaplyDefaultTriangleShader;
+extern NSString* const kMaplyShaderTriExp;
 
 extern NSString* const kMaplyShaderDefaultModelTri;
 
 extern NSString* const kMaplyShaderDefaultTriNoLighting;
 extern NSString* const kMaplyNoLightTriangleShader;
+extern NSString* const kMaplyShaderNoLightTriangleExp;
+extern NSString* const kMaplyShaderDefaultMarker;
 
 extern NSString* const kMaplyShaderDefaultTriScreenTex;
 
@@ -352,5 +387,14 @@ extern NSString* const kMaplyNoBackfaceLineShader;
 
 extern NSString* const kMaplyShaderBillboardGround;
 extern NSString* const kMaplyShaderBillboardEye;
+
+extern NSString* const kMaplyShaderDefaultWideVector;
+extern NSString* const kMaplyShaderWideVectorPerformance;
+extern NSString* const kMaplyShaderWideVectorExp;
+
+extern NSString* const kMaplyScreenSpaceDefaultMotionProgram;
+extern NSString* const kMaplyScreenSpaceDefaultProgram;
+extern NSString* const kMaplyScreenSpaceMaskProgram;
+extern NSString* const kMaplyScreenSpaceExpProgram;
 
 extern NSString* const kMaplyShaderParticleSystemPointDefault;

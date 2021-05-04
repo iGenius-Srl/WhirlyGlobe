@@ -3,7 +3,7 @@
  *  WhirlyGlobeLib
  *
  *  Created by Steve Gifford on 5/11/11.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2019 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -24,11 +24,8 @@
 
 - (std::string) asStdString
 {
-    const char *tmpStr = [self cStringUsingEncoding:NSASCIIStringEncoding];
-    if (!tmpStr)
-        return "";
-    std::string newStr(tmpStr);
-    return newStr;
+    const char * const tmpStr = [self cStringUsingEncoding:NSUTF8StringEncoding];
+    return tmpStr ? std::string(tmpStr) : std::string();
 }
 
 // Courtesy: http://stackoverflow.com/questions/3552195/how-to-convert-stdstring-to-nsstring

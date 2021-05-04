@@ -14,7 +14,6 @@ class LayerStartupShutdownTestCase: MaplyTestCase {
         super.init()
 
         self.name = "Repeated Layer Startup/Shutdown"
-        self.captureDelay = 4
         self.implementations = testCase.implementations
     }
     
@@ -22,50 +21,66 @@ class LayerStartupShutdownTestCase: MaplyTestCase {
 //    var testCase = GeographyClassTestCase()
     var testCase = VectorMBTilesTestCase()
 
+    var run = true
+
     func startGlobeLayer() {
+        self.testCase.globeViewController = globeViewController
+        self.testCase.baseViewController = globeViewController
         self.testCase.setUpWithGlobe(self.globeViewController!)
+
+        run = true
 
         // Shut it down in a bit
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.stopGlobeLayer()
+            if self.run {
+                self.stopGlobeLayer()
+            }
         }
     }
     
     func stopGlobeLayer() {
-        self.testCase.tearDown(withGlobe: self.globeViewController!)
+        self.testCase.stop()
 
         // Start it back up again in a bit
         // Note: Check to see if we're still valid here
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.startGlobeLayer()
+            if self.run {
+                self.startGlobeLayer()
+            }
         }
     }
     
     func startMapLayer() {
+        self.testCase.mapViewController = mapViewController
+        self.testCase.baseViewController = mapViewController
         self.testCase.setUpWithMap(self.mapViewController!)
 
         // Shut it down in a bit
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.stopMapLayer()
+            if self.run {
+                self.stopMapLayer()
+            }
         }
     }
     
     func stopMapLayer() {
-        self.testCase.tearDown(withMap: self.mapViewController!)
+        self.testCase.stop()
         
         // Start it back up again in a bit
         // Note: Check to see if we're still valid here
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.startMapLayer()
+            if self.run {
+                self.startMapLayer()
+            }
         }
     }
 
     // We need to create the globe controller ourselves so we can shut it down
-    override func runGlobeTest(withLock lock: DispatchGroup) {
+    override func startGlobe(_ nav: UINavigationController) {
         globeViewController = WhirlyGlobeViewController()
         baseViewController = globeViewController
-        testView?.addSubview(globeViewController!.view)
-        globeViewController!.view.frame = testView!.bounds
+        nav.pushViewController(baseViewController!, animated: true)
+        _ = baseViewController!.view
         globeViewController!.delegate = self
         // Note: Should also be adding as a child of the view controller
 
@@ -73,15 +88,18 @@ class LayerStartupShutdownTestCase: MaplyTestCase {
     }
     
     // Likewise for the map
-    override func runMapTest(withLock lock: DispatchGroup) {
+    override func startMap(_ nav: UINavigationController) {
         mapViewController = MaplyViewController()
         baseViewController = mapViewController
-        testView?.addSubview(mapViewController!.view)
-        mapViewController!.view.frame = testView!.bounds
+        nav.pushViewController(baseViewController!, animated: true)
+        _ = baseViewController!.view
         mapViewController!.delegate = self
         // Note: Should also be adding as a child of the view controller
         
         startMapLayer()
     }
 
+    override func stop() {
+        run = false
+    }
 }

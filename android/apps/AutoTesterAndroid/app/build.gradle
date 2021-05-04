@@ -1,18 +1,27 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8
+    }
     signingConfigs {
         config {
-            keyAlias 'key0'
-            keyPassword 'foofoo'
-            storeFile file('/Users/sjg/dev/WhirlyGlobe/android/apps/AutoTesterAndroid/foo.keystore')
-            storePassword 'foofoo'
+            keyAlias System.getenv('BITRISEIO_ANDROID_KEYSTORE_ALIAS')
+            keyPassword System.getenv('BITRISEIO_ANDROID_KEYSTORE_PRIVATE_KEY_PASSWORD')
+            storeFile file('../keystore')    // downloaded from BITRISEIO_ANDROID_KEYSTORE_URL
+            storePassword System.getenv('BITRISEIO_ANDROID_KEYSTORE_PASSWORD')
         }
     }
     compileSdkVersion 28
     defaultConfig {
         applicationId "com.mousebirdconsulting.autotester"
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
@@ -21,7 +30,7 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            debuggable true
+            debuggable false
             jniDebuggable false
             renderscriptDebuggable false
             signingConfig signingConfigs.config
@@ -30,14 +39,19 @@ android {
             jniDebuggable true
         }
     }
+    lintOptions {
+        abortOnError false
+    }
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation project(path: ':maply')
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
-    implementation 'com.squareup.okhttp:okhttp:2.7.5'
-    implementation 'org.apache.directory.studio:org.apache.commons.io:2.4'
-    implementation 'com.squareup.okio:okio:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'com.google.android.material:material:1.0.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+}
+repositories {
+    mavenCentral()
 }

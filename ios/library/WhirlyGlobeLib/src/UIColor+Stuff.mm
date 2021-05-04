@@ -3,7 +3,7 @@
  *  WhirlyGlobeLib
  *
  *  Created by Steve Gifford on 3/15/11.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2019 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -25,6 +25,23 @@ using namespace Eigen;
 
 @implementation UIColor(Stuff)
 
+- (UIColor *)lighterColor
+{
+    return [self lighterColor:1.3];
+}
+
+// Courtesy: https://stackoverflow.com/questions/11598043/get-slightly-lighter-and-darker-color-from-uicolor
+- (UIColor *)lighterColor:(float)withFactor
+{
+    CGFloat h, s, b, a;
+    if ([self getHue:&h saturation:&s brightness:&b alpha:&a])
+        return [UIColor colorWithHue:h
+                          saturation:s
+                          brightness:MIN(b * withFactor, 1.0)
+                               alpha:a];
+    return nil;
+}
+
 + (UIColor *) colorFromHexRGB:(int)hexColor
 {
     float red = (((hexColor) >> 16) & 0xFF)/255.0;
@@ -34,10 +51,35 @@ using namespace Eigen;
     return [UIColor colorWithRed:red green:green blue:blue alpha:1.0];
 }
 
++ (UIColor *) colorFromShortHexRGB:(int)hexColor
+{
+    int red = (((hexColor) >> 12) & 0xF); red |= red << 4;
+    int green = (((hexColor) >> 4) & 0xF); green |= green << 4;
+    int blue = (((hexColor) >> 0) & 0xF); blue |= blue << 4;
+    
+    return [UIColor colorWithRed:red/255.0f green:green/255.0f blue:blue/255.0f alpha:1.0];
+}
+
++ (UIColor *) colorFromRGBA:(const WhirlyKit::RGBAColor &)color
+{
+    float red = color.r / 255.0;
+    float green = color.g / 255.0;
+    float blue = color.b / 255.0;
+    float alpha = color.a / 255.0;
+
+    return [UIColor colorWithRed:red green:green blue:blue alpha:alpha];
+}
+
 - (int) asHexRGB
 {
   RGBAColor rgb = [self asRGBAColor];
   return (rgb.r << 16) | (rgb.g << 8)| rgb.b;
+}
+
+- (NSString *) asHexRGBAString
+{
+    RGBAColor rgb = [self asRGBAColor];
+    return [NSString stringWithFormat:@"#%2d%2d%2d%2d",rgb.r,rgb.g,rgb.b,rgb.a];
 }
 
 - (RGBAColor) asRGBAColor
@@ -89,7 +131,7 @@ using namespace Eigen;
             break;
     }
     
-    return color;    
+    return color;
 }
 
 @end

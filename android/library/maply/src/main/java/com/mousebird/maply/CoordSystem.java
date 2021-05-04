@@ -32,7 +32,7 @@ public class CoordSystem
 	/**
 	 * Only ever called by the subclass.  Don't use this directly please.
 	 */
-	CoordSystem()
+	protected CoordSystem()
 	{
 	}
 	
@@ -56,16 +56,15 @@ public class CoordSystem
      */
 	public Mbr getBounds()
 	{
-		if (ll == null || ur == null)
-			return null;
-
-		Mbr mbr = new Mbr();
-		mbr.addPoint(new Point2d(ll.getX(),ll.getY()));
-		mbr.addPoint(new Point2d(ur.getX(),ur.getY()));
-
-		return mbr;
+		return isValid() ? new Mbr(ll.getX(),ll.getY(), ur.getX(),ur.getY()) : null;
 	}
 
+	/**
+	 * Returns true if the corner points are set and not identical
+	 */
+	public boolean isValid() {
+		return (ll != null && ur != null && ll.getX() < ur.getX());
+	}
 	/**
 	 * Set the bounding box for the coordinate system.
 	 * @param mbr
@@ -91,6 +90,22 @@ public class CoordSystem
 	 * @return A coordinate in longitude/latitude WGS84 radians.  Yes, radians.
 	 */
 	public native Point3d localToGeographic(Point3d pt);
+
+	/**
+	 * Convert from the local coordinate system to Geocentric
+	 *
+	 * @param pt A point in the local coordinate system.
+	 * @return A coordinate in geocentric.
+	 */
+	public native Point3d localToGeocentric(Point3d pt);
+
+	/**
+	 * Convert from geocentric to the local coordinate system.
+	 *
+	 * @param pt A point in geocentric
+	 * @return A coordinate in the local coordinate system.
+	 */
+	public native Point3d geocentricToLocal(Point3d pt);
 
 	/**
 	 * Convert the coordinate between systems.

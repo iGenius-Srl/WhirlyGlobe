@@ -1,9 +1,8 @@
-/*
- *  SLDPointSymbolizer.java
+/*  SLDPointSymbolizer.java
  *  WhirlyGlobeLib
  *
  *  Created by Ranen Ghosh on 3/14/17.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,20 +14,18 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 package com.mousebird.maply.sld.sldsymbolizers;
 
 
 import android.graphics.Bitmap;
-import android.util.Log;
 
-import com.mousebird.maply.MaplyBaseController;
+import com.mousebird.maply.RenderController;
+import com.mousebird.maply.RenderControllerInterface;
 import com.mousebird.maply.VectorStyleSettings;
 import com.mousebird.maply.VectorTileMarkerStyle;
 import com.mousebird.maply.VectorTileStyle;
 import com.mousebird.maply.sld.sldstyleset.SLDParseHelper;
-import com.mousebird.maply.MaplyTexture;
 import com.mousebird.maply.MarkerInfo;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -38,18 +35,17 @@ import java.io.IOException;
 import java.util.HashMap;
 
 /**
- *
  * Class corresponding to the PointSymbolizer element
- * @see http://schemas.opengis.net/se/1.1.0/Symbolizer.xsd for SLD v1.1.0
- * @see http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd for SLD v1.0.0
+ * see http://schemas.opengis.net/se/1.1.0/Symbolizer.xsd for SLD v1.1.0
+ * see http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd for SLD v1.0.0
  */
 public class SLDPointSymbolizer extends SLDSymbolizer {
 
-    private VectorTileMarkerStyle vectorTileMarkerStyle;
+    private final VectorTileMarkerStyle vectorTileMarkerStyle;
 
     public SLDPointSymbolizer(XmlPullParser xpp, SLDSymbolizerParams symbolizerParams) throws XmlPullParserException, IOException {
 
-        MaplyBaseController viewC = symbolizerParams.getBaseController();
+        RenderControllerInterface viewC = symbolizerParams.getBaseController();
         VectorStyleSettings vectorStyleSettings = symbolizerParams.getVectorStyleSettings();
 
         Bitmap bitmap = null;
@@ -92,8 +88,8 @@ public class SLDPointSymbolizer extends SLDSymbolizer {
             }
         }
 
-        markerInfo.setDrawPriority(symbolizerParams.getRelativeDrawPriority() + MaplyBaseController.MarkerDrawPriorityDefault);
-        vectorTileMarkerStyle = new VectorTileMarkerStyle(markerInfo, bitmap, vectorStyleSettings, viewC);
+        markerInfo.setDrawPriority(symbolizerParams.getRelativeDrawPriority() + RenderController.MarkerDrawPriorityDefault);
+        vectorTileMarkerStyle = new VectorTileMarkerStyle(null,null,markerInfo,bitmap,vectorStyleSettings,viewC);
         symbolizerParams.incrementRelativeDrawPriority();
     }
 
@@ -105,9 +101,7 @@ public class SLDPointSymbolizer extends SLDSymbolizer {
 
 
     public static boolean matchesSymbolizerNamed(String symbolizerName) {
-        if (symbolizerName.equals("PointSymbolizer"))
-            return true;
-        return false;
+        return symbolizerName.equals("PointSymbolizer");
     }
 
 }

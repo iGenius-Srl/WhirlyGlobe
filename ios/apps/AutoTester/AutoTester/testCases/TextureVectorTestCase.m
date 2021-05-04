@@ -3,11 +3,11 @@
 //  AutoTester
 //
 //  Created by Steve Gifford on 11/2/16.
-//  Copyright © 2016-2017 mousebird consulting. All rights reserved.
+//  Copyright © 2016-2021 mousebird consulting.
 //
 
 #import "TextureVectorTestCase.h"
-#import "GeographyClassTestCase.h"
+#import "AutoTester-Swift.h"
 
 @implementation TextureVectorTestCase
 {
@@ -18,8 +18,7 @@
 {
     if (self = [super init]) {
         self.name = @"Textured Vectors";
-        self.captureDelay = 5;
-        self.implementations = MaplyTestCaseImplementationGlobe;
+        self.implementations = MaplyTestCaseImplementationGlobe | MaplyTestCaseImplementationMap;
     }
     
     return self;
@@ -35,9 +34,15 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
     NSMutableArray *tessObjs = [NSMutableArray array];
     
     NSArray * paths = [[NSBundle mainBundle] pathsForResourcesOfType:@"geojson" inDirectory:nil];
+    // Sort so that the results don't depend on the bundle ordering
+    NSArray * sortedPaths = [paths sortedArrayUsingDescriptors:@[
+        [NSSortDescriptor sortDescriptorWithKey:@""
+                                      ascending:NO  // first 20 are slow, use the last 20
+                                       selector:@selector(localizedStandardCompare:)]
+        ]];
     int count = 0;
     // Work through the individual GeoJSON files
-    for (NSString* fileName  in paths) {
+    for (NSString* fileName  in sortedPaths) {
 		NSLog(@"Loading %@...", fileName);
         if (count++ > 20)
             break;
@@ -56,11 +61,11 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
                     vecObj.attributes[kMaplyVecCenterX] = @(center.x);
                     vecObj.attributes[kMaplyVecCenterY] = @(center.y);
 
+                    float thisClipGridLon = ClipGridSize;
                     if (globeMode)
                     {
                         // We adjust the grid clipping size based on the latitude
                         // This helps a lot near the poles.  Otherwise we're way oversampling
-                        float thisClipGridLon = ClipGridSize;
                         if (ABS(center.y) > 60.0/180.0 * M_PI)
                             thisClipGridLon *= 4.0;
                         else if (ABS(center.y) > 45.0/180.0 * M_PI)
@@ -68,10 +73,9 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
                         
                         // We clip the vector to a grid and then tesselate the results
                         // This forms the vector closer to the globe, make it look nicer
-                        tessObj = [[vecObj clipToGrid:CGSizeMake(thisClipGridLon, ClipGridSize)] tesselate];
-                    } else {
-                        tessObj = [vecObj tesselate];
                     }
+
+                    tessObj = [[vecObj clipToGrid:CGSizeMake(thisClipGridLon, ClipGridSize)] tesselate];
 
                     // Don't add them yet, it's more efficient later
                     if (tessObj)
@@ -80,10 +84,7 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
             }
         }
     }
-    
-    // Note: At this point you could cache the country vectors on disk and read them back in
-    //       You might want this to speed things up
-    
+        
     // Add all the vectors at once to be more efficient
     // The geometry gets grouped together, which is nice and fast
     [baseVC addVectors:tessObjs desc:
@@ -92,7 +93,7 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
        // We'll apply this texture when filled
        kMaplyVecTexture: dotsTexture,
        // The texture is applied with a tanget plane from the center
-       kMaplyVecTextureProjection: kMaplyProjectionTangentPlane,
+       kMaplyVecTextureProjection: globeMode ? kMaplyProjectionTangentPlane : kMaplyProjectionNone,
        // The texture coordinates will be scaled like so
        kMaplyVecTexScaleX: @(6.0),
        kMaplyVecTexScaleY: @(6.0),
@@ -100,7 +101,7 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
        }];
     
     // Turn this on to see the tessellation over the top.  Good for debugging
-    //                   [baseVC addVectors:tessObjs desc:@{kMaplyDrawPriority: @(kMaplyVectorDrawPriorityDefault+1000)} mode:MaplyThreadCurrent];
+    //[baseVC addVectors:tessObjs desc:@{kMaplyDrawPriority: @(kMaplyVectorDrawPriorityDefault+1000)} mode:MaplyThreadCurrent];
 }
 
 - (void)setupTexture:(MaplyBaseViewController *)viewC
@@ -119,7 +120,8 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
     globeVC.keepNorthUp = true;
     self.baseView = [[GeographyClassTestCase alloc]init];
     [self.baseView setUpWithGlobe:globeVC];
-    
+    [globeVC animateToPosition:MaplyCoordinateMakeWithDegrees(-100.0, 0.0) time:1.0];
+
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                    ^{
                        //Overlay Countries
@@ -134,6 +136,7 @@ static const float ClipGridSize = 2.0/180.0*M_PI;
 
     self.baseView = [[GeographyClassTestCase alloc]init];
     [self.baseView setUpWithMap:mapVC];
+    [mapVC animateToPosition:MaplyCoordinateMakeWithDegrees(-100.0, 0.0) time:1.0];
 
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0),
                    ^{

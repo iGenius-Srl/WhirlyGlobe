@@ -3,7 +3,7 @@
  *  WhirlyGlobeLib
  *
  *  Created by Steve Gifford on 12/4/12.
- *  Copyright 2011-2017 mousebird consulting. All rights reserved.
+ *  Copyright 2011-2019 mousebird consulting.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 
 #import <map>
 #import "LayoutLayer.h"
-#import "GlobeLayerViewWatcher.h"
 #import "GlobeMath.h"
 
 using namespace Eigen;
@@ -40,18 +39,16 @@ namespace WhirlyKit
     // Set if we haven't moved for a while
     bool stopped;
     // Last view state we've seen
-    WhirlyKitViewState *viewState;
+    ViewStateRef viewState;
     // Used for sizing info
-    WhirlyKitSceneRendererES * __weak renderer;
-    NSTimeInterval lastUpdate;
+    TimeInterval lastUpdate;
 }
 
-- (id)initWithRenderer:(WhirlyKitSceneRendererES *)inRenderer
+- (id)initWithRenderer:(SceneRenderer *)inRenderer
 {
     self = [super init];
     if (!self)
         return nil;
-    renderer = inRenderer;
     _maxDisplayObjects = 0;
     lastUpdate = 0.0;
     
@@ -64,18 +61,16 @@ namespace WhirlyKit
     scene = inScene;
     
     // Get us view updates, but we'll filter them
-    if (layerThread.viewWatcher)
-        [layerThread.viewWatcher addWatcherTarget:self selector:@selector(viewUpdate:) minTime:0.0 minDist:0.0 maxLagTime:0.0];
-    
+    [inLayerThread.viewWatcher addWatcherTarget:self selector:@selector(viewUpdate:) minTime:0.0 minDist:0.0 maxLagTime:0.0];
+
     [self checkUpdate];
 }
 
 - (void)teardown
 {
     scene = NULL;
-    if (layerThread.viewWatcher)
-        [layerThread.viewWatcher removeWatcherTarget:self selector:@selector(viewUpdate:)];
-    
+    [layerThread.viewWatcher removeWatcherTarget:self selector:@selector(viewUpdate:)];
+
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(delayCheck) object:nil];
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(checkUpdate) object:nil];
 }
@@ -91,17 +86,17 @@ static const float DelayPeriod = 0.2;
 static const float MaxDelay = 1.0;
 
 // We're getting called for absolutely every update here
-- (void)viewUpdate:(WhirlyKitViewState *)inViewState
+- (void)viewUpdate:(WhirlyKitViewStateWrapper *)inViewState
 {
     if (!scene)
         return;
     
-    if (viewState && [viewState isKindOfClass:[WhirlyKitViewState class]] && [inViewState isSameAs:viewState])
+    if (viewState && viewState->isSameAs(inViewState.viewState.get()))
         return;
-    viewState = inViewState;
+    viewState = inViewState.viewState;
     
     // If it's been too long since an update, force the next one
-    if (CFAbsoluteTimeGetCurrent() - lastUpdate > MaxDelay)
+    if (scene->getCurrentTime() - lastUpdate > MaxDelay)
     {
         [self updateLayout];
         return;
@@ -123,7 +118,7 @@ static const float MaxDelay = 1.0;
 // We also need to check on updates outside of the layer thread
 - (void)checkUpdate
 {
-    LayoutManager *layoutManager = (LayoutManager *)scene->getManager(kWKLayoutManager);
+    LayoutManagerRef layoutManager = std::dynamic_pointer_cast<LayoutManager>(scene->getManager(kWKLayoutManager));
     if (viewState && layoutManager && layoutManager->hasChanges())
     {
         [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(delayCheck) object:nil];
@@ -150,7 +145,7 @@ static const float MaxDelay = 1.0;
 - (void)setMaxDisplayObjects:(int)maxDisplayObjects
 {
     _maxDisplayObjects = maxDisplayObjects;
-    LayoutManager *layoutManager = (LayoutManager *)scene->getManager(kWKLayoutManager);
+    LayoutManagerRef layoutManager = std::dynamic_pointer_cast<LayoutManager>(scene->getManager(kWKLayoutManager));
     if (layoutManager)
         layoutManager->setMaxDisplayObjects(_maxDisplayObjects);
 }
@@ -161,13 +156,13 @@ static const float MaxDelay = 1.0;
 //    NSLog(@"UpdateLayout called");
     if (!viewState)
         return;
-    lastUpdate = CFAbsoluteTimeGetCurrent();
+    lastUpdate = scene->getCurrentTime();
 
-    LayoutManager *layoutManager = (LayoutManager *)scene->getManager(kWKLayoutManager);
+    LayoutManagerRef layoutManager = std::dynamic_pointer_cast<LayoutManager>(scene->getManager(kWKLayoutManager));
     if (layoutManager)
     {
         ChangeSet changes;
-        layoutManager->updateLayout(viewState,changes);
+        layoutManager->updateLayout(nullptr,viewState,changes);
         [layerThread addChangeRequests:changes];
     }
 }
@@ -180,7 +175,7 @@ static const float MaxDelay = 1.0;
         return;
     }
     
-    LayoutManager *layoutManager = (LayoutManager *)scene->getManager(kWKLayoutManager);
+    LayoutManagerRef layoutManager = std::dynamic_pointer_cast<LayoutManager>(scene->getManager(kWKLayoutManager));
     if (layoutManager)
         layoutManager->addLayoutObjects(newObjects);
 
@@ -196,7 +191,7 @@ static const float MaxDelay = 1.0;
         return;
     }
     
-    LayoutManager *layoutManager = (LayoutManager *)scene->getManager(kWKLayoutManager);
+    LayoutManagerRef layoutManager = std::dynamic_pointer_cast<LayoutManager>(scene->getManager(kWKLayoutManager));
     if (layoutManager)
         layoutManager->removeLayoutObjects(objectIDs);
     

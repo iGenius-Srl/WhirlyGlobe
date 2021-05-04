@@ -3,7 +3,7 @@
 //  AutoTester
 //
 //  Created by Stephen Gifford on 3/27/18.
-//  Copyright © 2018 mousebird consulting. All rights reserved.
+//  Copyright © 2018 mousebird consulting.
 //
 
 import Foundation
@@ -14,7 +14,6 @@ class GlobeSamplerTestCase: MaplyTestCase {
         super.init()
         
         self.name = "GlobeSampler Test Case"
-        self.captureDelay = 4
         self.implementations = [.globe,.map]
     }
 
@@ -36,16 +35,17 @@ class GlobeSamplerTestCase: MaplyTestCase {
         sampleParams.coordSys = MaplySphericalMercator(webStandard: ())
         sampleParams.coverPoles = true
         sampleParams.edgeMatching = true
-        sampleParams.minZoom = tileInfo.minZoom()
         sampleParams.maxZoom = tileInfo.maxZoom()
         sampleParams.singleLevel = true
         
         guard let imageLoader = MaplyQuadImageLoader(params: sampleParams, tileInfo: tileInfo, viewC: baseVC) else {
             return nil
         }
-        let interp = MaplyDebugImageLoaderInterpreter(loader: imageLoader, viewC: baseVC)
+        let interp = MaplyOvlDebugImageLoaderInterpreter(viewC: baseVC)
         imageLoader.setInterpreter(interp)
+#if !targetEnvironment(simulator)
         imageLoader.imageFormat = .imageUShort565;
+#endif
 //        imageLoader.debugMode = true
 
         return imageLoader

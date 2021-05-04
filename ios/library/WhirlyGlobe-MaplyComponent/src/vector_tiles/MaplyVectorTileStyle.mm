@@ -1,9 +1,8 @@
-/*
- *  MaplyVectorStyle.mm
+/*  MaplyVectorTileStyle.mm
  *  WhirlyGlobe-MaplyComponent
  *
  *  Created by Steve Gifford on 1/3/14.
- *  Copyright 2011-2017 mousebird consulting
+ *  Copyright 2011-2021 mousebird consulting
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,16 +14,15 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
  */
 
-#import "MaplyVectorStyle.h"
-#import "MaplyVectorTileLineStyle.h"
-#import "MaplyVectorTileMarkerStyle.h"
-#import "MaplyVectorTilePolygonStyle.h"
-#import "MaplyVectorTileTextStyle.h"
+#import "vector_styles/MaplyVectorStyle.h"
+#import "vector_styles/MaplyVectorTileLineStyle.h"
+#import "vector_styles/MaplyVectorTileMarkerStyle.h"
+#import "vector_styles/MaplyVectorTilePolygonStyle.h"
+#import "vector_styles/MaplyVectorTileTextStyle.h"
 #import "WhirlyGlobe.h"
-#import "MaplyBaseViewController.h"
+#import "control/MaplyBaseViewController.h"
 
 using namespace WhirlyKit;
 
@@ -56,11 +54,53 @@ using namespace WhirlyKit;
     return tileStyle;
 }
 
+// Parse a UIColor from hex values
++ (UIColor *) ParseColor:(NSString *)colorStr
+{
+    return [MaplyVectorTileStyle ParseColor:colorStr alpha:1.0];
+}
+
++ (UIColor *) ParseColor:(NSString *)colorStr alpha:(CGFloat)alpha
+{
+    // Hex color string
+    if ([colorStr characterAtIndex:0] == '#')
+    {
+        int red = 255, green = 255, blue = 255;
+        // parse the hex
+        NSScanner *scanner = [NSScanner scannerWithString:colorStr];
+        unsigned int colorVal;
+        [scanner setScanLocation:1]; // bypass #
+        [scanner scanHexInt:&colorVal];
+        blue = colorVal & 0xFF;
+        green = (colorVal >> 8) & 0xFF;
+        red = (colorVal >> 16) & 0xFF;
+        
+        return [UIColor colorWithRed:red/255.0*alpha green:green/255.0*alpha blue:blue/255.0*alpha alpha:alpha];
+    } else if ([colorStr rangeOfString:@"rgba"].location == 0)
+    {
+        NSScanner *scanner = [NSScanner scannerWithString:colorStr];
+        NSMutableCharacterSet *skipSet = [[NSMutableCharacterSet alloc] init];
+        [skipSet addCharactersInString:@"(), "];
+        [scanner setCharactersToBeSkipped:skipSet];
+        [scanner setScanLocation:5];
+        int red,green,blue;
+        [scanner scanInt:&red];
+        [scanner scanInt:&green];
+        [scanner scanInt:&blue];
+        float locAlpha;
+        [scanner scanFloat:&locAlpha];
+        
+        return [UIColor colorWithRed:red/255.0*alpha green:green/255.0*alpha blue:blue/255.0*alpha alpha:locAlpha*alpha];
+    }
+    
+    return [UIColor colorWithWhite:1.0 alpha:alpha];
+}
+
 - (instancetype)initWithStyleEntry:(NSDictionary *)styleEntry viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC
 {
     self = [super init];
     _viewC = viewC;
-    _uuid = styleEntry[@"uuid"];
+    _uuid = [styleEntry[@"uuid"] longLongValue];
     if ([styleEntry[@"tilegeom"] isEqualToString:@"add"])
         self.geomAdditive = true;
     _selectable = styleEntry[kMaplySelectable];
@@ -105,11 +145,21 @@ using namespace WhirlyKit;
     }
 }
 
-- (NSArray *)buildObjects:(NSArray *)vecObjs forTile:(MaplyVectorTileInfo *)tileInfo viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC;
+- (void)buildObjects:(NSArray *)vecObjs
+             forTile:(MaplyVectorTileData *)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> *)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
 {
-    return nil;
 }
 
+/// Construct objects related to this style based on the input data.
+- (void)buildObjects:(NSArray * _Nonnull)vecObjs
+             forTile:(MaplyVectorTileData * __nonnull)tileInfo
+               viewC:(NSObject<MaplyRenderControllerProtocol> * _Nonnull)viewC
+                desc:(NSDictionary * _Nullable)extraDesc
+            cancelFn:(bool(^__nullable)(void))cancelFn
+{
+}
 
 //sometimes we get strings that look like [name]+'\n '+[ele]
 - (NSString*)formatText:(NSString*)formatString forObject:(MaplyVectorObject*)vec
@@ -238,7 +288,7 @@ using namespace WhirlyKit;
 - (NSString*)description
 {
     return [NSString stringWithFormat:@"%@ uuid:%@ additive:%d",
-          [[self class] description], self.uuid, self.geomAdditive];
+          [[self class] description], @(self.uuid), self.geomAdditive];
 }
 
 @end

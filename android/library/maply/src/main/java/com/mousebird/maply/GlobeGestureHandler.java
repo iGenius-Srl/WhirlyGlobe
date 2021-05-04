@@ -116,7 +116,7 @@ public class GlobeGestureHandler
 					double anglePerSec = autoRotateDegrees / 180.0 * Math.PI;
 					// GlobeView inGlobeView,MaplyRenderer inRender,double inVelocity,double inAcceleration,Point3d inAxis,boolean inNorthUp
 					Point3d north = new Point3d(0,0,1);
-					rotateAnimation = new GlobeAnimateMomentum(globeView,globeControl.renderWrapper.maplyRender,anglePerSec,0.0,north,false);
+					rotateAnimation = new GlobeAnimateMomentum(globeView,globeControl.renderWrapper.maplyRender.get(),anglePerSec,0.0,north,false);
 					globeView.setAnimationDelegate(rotateAnimation);
 				}
 				autoRotateHandler = new Handler();
@@ -373,7 +373,7 @@ public class GlobeGestureHandler
 	
 				if (angVel > 0.0)
 				{
-					globeView.setAnimationDelegate(new GlobeAnimateMomentum(globeView,globeControl.renderWrapper.maplyRender,angVel,accel,rotAxis,globeView.northUp));
+					globeView.setAnimationDelegate(new GlobeAnimateMomentum(globeView,globeControl.renderWrapper.maplyRender.get(),angVel,accel,rotAxis,globeView.northUp));
 				}
 			}
 
@@ -387,8 +387,9 @@ public class GlobeGestureHandler
 		public void onLongPress(MotionEvent e) 
 		{
 //			Log.d("Maply","Long Press");
-			if (e.getPointerCount() == 1)
-				globeControl.processLongPress(new Point2d(e.getX(),e.getY()));
+			if (globeControl != null && e.getPointerCount() == 1) {
+				globeControl.processLongPress(new Point2d(e.getX(), e.getY()));
+			}
 
 			updateTouchedTime();
 		}
@@ -418,8 +419,10 @@ public class GlobeGestureHandler
 		@Override
 		public boolean onSingleTapConfirmed(MotionEvent e) 
 		{
-			globeControl.processTap(new Point2d(e.getX(),e.getY()));
-			updateTouchedTime();
+			if (globeControl != null) {
+				globeControl.processTap(new Point2d(e.getX(), e.getY()));
+				updateTouchedTime();
+			}
 			return true;
 		}
 
@@ -427,6 +430,10 @@ public class GlobeGestureHandler
 		@Override
 		public boolean onDoubleTap(MotionEvent e) 
 		{
+			if (globeControl == null) {
+				return false;
+			}
+
 			CoordSystemDisplayAdapter coordAdapter = globeView.getCoordAdapter();
 			Point2d frameSize = globeControl.getViewSize();
 
@@ -441,20 +448,17 @@ public class GlobeGestureHandler
 				return false;
 			Point3d geoCoord = coordAdapter.getCoordSystem().localToGeographic(localPt);
 
-			if (pt != null || geoCoord != null)
-			{
-				// Zoom in where they tapped
-				double height = globeView.getHeight();
-				double newHeight = height/2.0;
-				newHeight = Math.min(newHeight,zoomLimitMax);
-				newHeight = Math.max(newHeight,zoomLimitMin);
+			// Zoom in where they tapped
+			double height = globeView.getHeight();
+			double newHeight = height/2.0;
+			newHeight = Math.min(newHeight,zoomLimitMax);
+			newHeight = Math.max(newHeight,zoomLimitMin);
 
-				// Note: This isn't right.  Need the 
-				Quaternion newQuat = globeView.makeRotationToGeoCoord(geoCoord.getX(), geoCoord.getY(), globeView.northUp);
-				
-				// Now kick off the animation
-				globeView.setAnimationDelegate(new GlobeAnimateRotation(globeView, globeControl.renderWrapper.maplyRender, newQuat, newHeight, 0.5));
-			}
+			// Note: This isn't right.  Need the
+			Quaternion newQuat = globeView.makeRotationToGeoCoord(geoCoord.getX(), geoCoord.getY(), globeView.northUp);
+
+			// Now kick off the animation
+			globeView.setAnimationDelegate(new GlobeAnimateRotation(globeView, globeControl.renderWrapper.maplyRender.get(), newQuat, newHeight, 0.5));
 
 			updateTouchedTime();
 			isActive = false;
@@ -612,7 +616,7 @@ public class GlobeGestureHandler
 			newHeight = Math.max(newHeight,zoomLimitMin);
 
 			// Now kick off the animation
-			globeView.setAnimationDelegate(new GlobeAnimateRotation(globeView, globeControl.renderWrapper.maplyRender, globeView.getRotQuat(), newHeight, 0.5));
+			globeView.setAnimationDelegate(new GlobeAnimateRotation(globeView, globeControl.renderWrapper.maplyRender.get(), globeView.getRotQuat(), newHeight, 0.5));
 
 			sl.isActive = false;
 			gl.isActive = false;
@@ -652,5 +656,5 @@ public class GlobeGestureHandler
 
 		updateTouchedTime();
 		return true;
-	}      
+	}
 }

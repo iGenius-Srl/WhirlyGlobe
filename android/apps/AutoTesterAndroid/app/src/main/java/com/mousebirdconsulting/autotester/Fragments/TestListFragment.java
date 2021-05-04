@@ -1,11 +1,13 @@
 package com.mousebirdconsulting.autotester.Fragments;
 
+import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,49 +19,12 @@ import com.mousebirdconsulting.autotester.Framework.MaplyDownloadManager;
 import com.mousebirdconsulting.autotester.Framework.MaplyTestCase;
 import com.mousebirdconsulting.autotester.MainActivity;
 import com.mousebirdconsulting.autotester.R;
-import com.mousebirdconsulting.autotester.TestCases.AnimatedBaseMapTestCase;
-import com.mousebirdconsulting.autotester.TestCases.AnimatedMarkersTestCase;
-import com.mousebirdconsulting.autotester.TestCases.AnimatedScreenMarkersTestCase;
-import com.mousebirdconsulting.autotester.TestCases.AtmosphereTestCase;
-import com.mousebirdconsulting.autotester.TestCases.AutoRotateTestCase;
-import com.mousebirdconsulting.autotester.TestCases.BillboardTestCase;
-import com.mousebirdconsulting.autotester.TestCases.BoundsTestCase;
-import com.mousebirdconsulting.autotester.TestCases.CartoDBMapTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ClusteredMarkersTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ComplexParticleSystemTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ComponentObjectLeakTestCase;
-import com.mousebirdconsulting.autotester.TestCases.CoordConversionTestCase;
-import com.mousebirdconsulting.autotester.TestCases.CustomBNGCoordAdapter;
-import com.mousebirdconsulting.autotester.TestCases.CustomBNGTileSource;
-import com.mousebirdconsulting.autotester.TestCases.GeomPointsTestCase;
-import com.mousebirdconsulting.autotester.TestCases.GestureFeedbackTestCase;
-//import com.mousebirdconsulting.autotester.TestCases.GreatCircleTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ImageSingleLevelTestCase;
-import com.mousebirdconsulting.autotester.TestCases.LIDARTestCase;
-import com.mousebirdconsulting.autotester.TestCases.LayerShutdownTestCase;
-import com.mousebirdconsulting.autotester.TestCases.LightingTestCase;
-import com.mousebirdconsulting.autotester.TestCases.LocalVectorTileTestCase;
-import com.mousebirdconsulting.autotester.TestCases.MBTilesImageTestCase;
-import com.mousebirdconsulting.autotester.TestCases.MaplyStarModelTestCase;
-import com.mousebirdconsulting.autotester.TestCases.MapzenTestCase;
-import com.mousebirdconsulting.autotester.TestCases.MarkersAndLinesTestCase;
-import com.mousebirdconsulting.autotester.TestCases.MarkersTestCase;
-import com.mousebirdconsulting.autotester.TestCases.PagingLayerTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ParticleSystemTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ScreenLabelsTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ScreenMarkersTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ShapefileTestCase;
-import com.mousebirdconsulting.autotester.TestCases.ShapesTestCase;
-import com.mousebirdconsulting.autotester.TestCases.SimpleParticleSystemTestCase;
-import com.mousebirdconsulting.autotester.TestCases.SLDTestCase;
-import com.mousebirdconsulting.autotester.TestCases.StamenRemoteTestCase;
-import com.mousebirdconsulting.autotester.TestCases.StartupShutdownTestCase;
-import com.mousebirdconsulting.autotester.TestCases.StickersTestCase;
-import com.mousebirdconsulting.autotester.TestCases.TextureVectorTestCase;
-import com.mousebirdconsulting.autotester.TestCases.VectorsTestCase;
-import com.mousebirdconsulting.autotester.TestCases.WideVectorsTestCase;
+import com.mousebirdconsulting.autotester.TestCases.*;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class TestListFragment extends Fragment {
 
@@ -87,7 +52,7 @@ public class TestListFragment extends Fragment {
 	}
 
 	private RecyclerView.LayoutManager createLayoutManager() {
-		return new LinearLayoutManager(getActivity().getApplicationContext());
+		return new LinearLayoutManager(Objects.requireNonNull(getActivity()).getApplicationContext());
 	}
 
 	public void changeItemsState(boolean selected) {
@@ -110,63 +75,70 @@ public class TestListFragment extends Fragment {
 
 	private class TestListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-		private ArrayList<MaplyTestCase> testCases;
+		final private ArrayList<MaplyTestCase> testCases = new ArrayList<>();
 
 		TestListAdapter() {
-			testCases = new ArrayList<>();
-			testCases.add(new StamenRemoteTestCase(getActivity()));
-			testCases.add(new CartoDBMapTestCase(getActivity()));
-			testCases.add(new AnimatedBaseMapTestCase(getActivity()));
-			testCases.add(new ImageSingleLevelTestCase(getActivity()));
-			testCases.add(new VectorsTestCase(getActivity()));
-			testCases.add(new ShapefileTestCase(getActivity()));
-//			testCases.add(new GreatCircleTestCase(getActivity()));
-			testCases.add(new TextureVectorTestCase(getActivity()));
-			testCases.add(new ScreenLabelsTestCase(getActivity()));
-			testCases.add(new ScreenMarkersTestCase(getActivity()));
-			testCases.add(new MarkersTestCase(getActivity()));
-			testCases.add(new AnimatedScreenMarkersTestCase(getActivity()));
-			testCases.add(new AnimatedMarkersTestCase(getActivity()));
-			testCases.add(new ClusteredMarkersTestCase(getActivity()));
-			testCases.add(new StickersTestCase(getActivity()));
-			testCases.add(new GestureFeedbackTestCase(getActivity()));
-			testCases.add(new SimpleParticleSystemTestCase(getActivity()));
-			testCases.add(new ParticleSystemTestCase(getActivity()));
-			testCases.add(new ComplexParticleSystemTestCase(getActivity()));
-			testCases.add(new CustomBNGTileSource(getActivity()));
-			testCases.add(new CustomBNGCoordAdapter(getActivity()));
-			testCases.add(new MaplyStarModelTestCase(getActivity()));
-			testCases.add(new ComponentObjectLeakTestCase(getActivity()));
-			testCases.add(new ShapesTestCase(getActivity()));
-			testCases.add(new AtmosphereTestCase(getActivity()));
-			testCases.add(new LightingTestCase(getActivity()));
-			testCases.add(new MBTilesImageTestCase(getActivity()));
-			testCases.add(new BillboardTestCase(getActivity()));
-			testCases.add(new LocalVectorTileTestCase(getActivity()));
-			testCases.add(new PagingLayerTestCase(getActivity()));
-			testCases.add(new CoordConversionTestCase(getActivity()));
-			testCases.add(new StartupShutdownTestCase(getActivity()));
-			testCases.add(new MarkersAndLinesTestCase(getActivity()));
-			testCases.add(new BoundsTestCase(getActivity()));
-			testCases.add(new LayerShutdownTestCase(getActivity()));
-			testCases.add(new GeomPointsTestCase(getActivity()));
-			testCases.add(new AutoRotateTestCase(getActivity()));
-			testCases.add(new MapzenTestCase(getActivity()));
-			testCases.add(new LIDARTestCase(getActivity()));
-			testCases.add(new WideVectorsTestCase(getActivity()));
-			testCases.add(new SLDTestCase(getActivity()));
-//			testCases.add(new ArealTestCase(getActivity()));
+			Activity a = Objects.requireNonNull(getActivity());
+			testCases.add(new StamenRemoteTestCase(a));
+			testCases.add(new GeographyClass(a));
+			testCases.add(new AnimatedBaseMapTestCase(a));
+			testCases.add(new ImageReloadTestCase(a));
+			testCases.add(new CustomBNGCoordAdapter(a));
+			testCases.add(new CustomBNGTileSource(a));
+			testCases.add(new ScreenLabelsTestCase(a));
+			testCases.add(new ScreenMarkersTestCase(a));
+			testCases.add(new MarkersTestCase(a));
+			testCases.add(new AnimatedScreenMarkersTestCase(a));
+			testCases.add(new AnimatedMarkersTestCase(a));
+			testCases.add(new ClusteredMarkersTestCase(a));
+			testCases.add(new MovingScreenMarkersTestCase(a));
+			testCases.add(new VectorsTestCase(a));
+			testCases.add(new GreatCircleTestCase(a));
+			testCases.add(new SimpleStyleTestCase(a));
+			testCases.add(new VectorStyleTestCase(a));
+			testCases.add(new VectorHoleTestCase(a));
+			testCases.add(new ShapefileTestCase(a));
+			testCases.add(new WideVectorsTestCase(a));
+			testCases.add(new TextureVectorTestCase(a));
+			testCases.add(new SLDTestCase(a));
+			testCases.add(new LoftedPolyTestCase(a));
+			testCases.add(new StickersTestCase(a));
+			testCases.add(new PagingLayerTestCase(a));
+			testCases.add(new VectorMBTilesTestCase(a));
+			testCases.add(new MapTilerTestCase(a));
+			testCases.add(new MapTilerCircleTestCase(a));
+			testCases.add(new OpenMapTilesHybridTestCase(a));
+			testCases.add(new CartoTestCase(a));
+			testCases.add(new ShapesTestCase(a));
+//			testCases.add(new MaplyStarModelTestCase(a));
+			testCases.add(new FindHeightTestCase(a));
+//			testCases.add(new GestureFeedbackTestCase(a));
+//			testCases.add(new LightingTestCase(a));
+			testCases.add(new BillboardTestCase(a));
+//			testCases.add(new CoordConversionTestCase(a));
+//			testCases.add(new StartupShutdownTestCase(a));
+//			testCases.add(new MarkersAndLinesTestCase(a));
+//			testCases.add(new BoundsTestCase(a));
+//			testCases.add(new LayerShutdownTestCase(a));
+//			testCases.add(new GeomPointsTestCase(a));
+//			testCases.add(new AutoRotateTestCase(a));
+//			testCases.add(new ArealTestCase(a));
+			testCases.add(new LocationTrackingRealTestCase(a));
+			testCases.add(new LocationTrackingSimTestCase(a));
+			testCases.add(new AnimationDelegateTestCase(a));
+			testCases.add(new ComponentObjectLeakTestCase(a));
 		}
 
 		public void downloadResources() {
 			ArrayList<MaplyTestCase> incompleteTest = new ArrayList<>();
+			Context context = Objects.requireNonNull(getContext());
 			for (MaplyTestCase testCase : this.testCases) {
 				if (!testCase.areResourcesDownloaded()) {
 					incompleteTest.add(testCase);
-					ConfigOptions.setTestState(getContext(), testCase.getTestName(), ConfigOptions.TestState.Downloading);
+					ConfigOptions.setTestState(context, testCase.getTestName(), ConfigOptions.TestState.Downloading);
 				} else {
-					if (ConfigOptions.getTestState(getContext(), testCase.getTestName()) != ConfigOptions.TestState.Selected) {
-						ConfigOptions.setTestState(getContext(), testCase.getTestName(), ConfigOptions.TestState.Ready);
+					if (ConfigOptions.getTestState(context, testCase.getTestName()) != ConfigOptions.TestState.Selected) {
+						ConfigOptions.setTestState(context, testCase.getTestName(), ConfigOptions.TestState.Ready);
 					}
 				}
 				adapter.notifyDataSetChanged();
@@ -209,14 +181,15 @@ public class TestListFragment extends Fragment {
 			manager.execute();
 		}
 
+		@NotNull
 		@Override
-		public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+		public RecyclerView.ViewHolder onCreateViewHolder(@NotNull ViewGroup parent, int viewType) {
 			View view = LayoutInflater.from(getContext()).inflate(R.layout.testlistitemview, parent, false);
 			return new TestViewHolder(view);
 		}
 
 		@Override
-		public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+		public void onBindViewHolder(@NotNull RecyclerView.ViewHolder holder, int position) {
 			((TestViewHolder) holder).bindViewHolder(testCases.get(position), position);
 		}
 
@@ -226,9 +199,10 @@ public class TestListFragment extends Fragment {
 		}
 
 		public void changeItemsState(boolean selected) {
+			Context context = Objects.requireNonNull(getContext());
 			for (MaplyTestCase testCase : testCases) {
 				ConfigOptions.TestState state = selected ? ConfigOptions.TestState.Ready : ConfigOptions.TestState.Selected;
-				ConfigOptions.setTestState(getContext(), testCase.getTestName(), state);
+				ConfigOptions.setTestState(context, testCase.getTestName(), state);
 			}
 			notifyDataSetChanged();
 		}
@@ -240,10 +214,8 @@ public class TestListFragment extends Fragment {
 
 		private class TestViewHolder extends RecyclerView.ViewHolder {
 
-			private TextView label;
-			private ImageView selected, map, globe, retry, download;
-			private View self;
-			private MaplyTestCase testCase;
+			final private TextView label;
+			final private ImageView selected, map, globe, retry, download;
 			private int index;
 
 			public int getIndex() {
@@ -258,33 +230,29 @@ public class TestListFragment extends Fragment {
 				globe = (ImageView) itemView.findViewById(R.id.globe_icon);
 				retry = (ImageView) itemView.findViewById(R.id.retryDownload);
 				download = (ImageView) itemView.findViewById(R.id.downloading);
-				self = itemView;
+				//self = itemView;
 			}
 
 			public void bindViewHolder(final MaplyTestCase testCase, final int index) {
-				this.testCase = testCase;
+				//final private View self;
 				this.index = index;
 
-				this.label.setText(this.testCase.getTestName());
-				final MainActivity activity = (MainActivity) getActivity();
+				this.label.setText(testCase.getTestName());
+				final MainActivity activity = Objects.requireNonNull((MainActivity)getActivity());
+				final Context context = Objects.requireNonNull(getContext());
 				//if error
-				switch (ConfigOptions.getTestState(getContext(), testCase.getTestName())) {
+				switch (ConfigOptions.getTestState(context, testCase.getTestName())) {
 					case Error:
-						itemView.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorRed));
+						itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorRed));
 						retry.setVisibility(View.VISIBLE);
 						selected.setVisibility(View.INVISIBLE);
 						map.setVisibility(View.INVISIBLE);
 						globe.setVisibility(View.INVISIBLE);
 						download.setVisibility(View.INVISIBLE);
-						retry.setOnClickListener(new View.OnClickListener() {
-							@Override
-							public void onClick(View v) {
-								adapter.downloadTestResources(index);
-							}
-						});
+						retry.setOnClickListener(v -> adapter.downloadTestResources(index));
 						break;
 					case Downloading:
-						itemView.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorGreen));
+						itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorGreen));
 						retry.setVisibility(View.INVISIBLE);
 						selected.setVisibility(View.INVISIBLE);
 						map.setVisibility(View.INVISIBLE);
@@ -296,58 +264,49 @@ public class TestListFragment extends Fragment {
 					case Ready:
 						retry.setVisibility(View.INVISIBLE);
 						download.setVisibility(View.INVISIBLE);
-						itemView.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorWhite));
-						switch (ConfigOptions.getExecutionMode(getContext())) {
+						itemView.setBackgroundColor(ContextCompat.getColor(activity, R.color.colorWhite));
+						switch (ConfigOptions.getExecutionMode(context)) {
 							case Multiple:
-								changeItemState(ConfigOptions.getTestState(getContext(),testCase.getTestName()) == ConfigOptions.TestState.Selected);
+								changeItemState(ConfigOptions.getTestState(context,testCase.getTestName()) == ConfigOptions.TestState.Selected);
 								map.setVisibility(View.INVISIBLE);
 								globe.setVisibility(View.INVISIBLE);
-								itemView.setOnClickListener(new View.OnClickListener() {
-									@Override
-									public void onClick(View v) {
-										if (ConfigOptions.getTestState(getContext(), testCase.getTestName()) == ConfigOptions.TestState.Ready){
-											ConfigOptions.setTestState(getContext(), testCase.getTestName(), ConfigOptions.TestState.Selected);
-										} else {
-											ConfigOptions.setTestState(getContext(), testCase.getTestName(), ConfigOptions.TestState.Ready);
-										}
-										changeItemState(ConfigOptions.getTestState(getContext(),testCase.getTestName()) == ConfigOptions.TestState.Selected);
-										notifyItemChanged(index);
+								itemView.setOnClickListener(v -> {
+									if (ConfigOptions.getTestState(context, testCase.getTestName()) == ConfigOptions.TestState.Ready){
+										ConfigOptions.setTestState(context, testCase.getTestName(), ConfigOptions.TestState.Selected);
+									} else {
+										ConfigOptions.setTestState(context, testCase.getTestName(), ConfigOptions.TestState.Ready);
 									}
+									changeItemState(ConfigOptions.getTestState(context,testCase.getTestName()) == ConfigOptions.TestState.Selected);
+									notifyItemChanged(index);
 								});
 								break;
 
 							case Interactive:
 								selected.setVisibility(View.INVISIBLE);
-								if (this.testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Both || this.testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Map) {
+								if (testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Both || testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Map) {
 									map.setVisibility(View.VISIBLE);
 								}
 								else {
 									map.setVisibility(View.INVISIBLE);
 								}
-								if (this.testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Both || this.testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Globe) {
+								if (testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Both || testCase.getImplementation() == MaplyTestCase.TestExecutionImplementation.Globe) {
 									globe.setVisibility(View.VISIBLE);
 								}
 								else {
 									globe.setVisibility(View.INVISIBLE);
 								}
-								map.setOnClickListener(new View.OnClickListener() {
-									@Override
-									public void onClick(View v) {
-										ConfigOptions.setTestType(getContext(), ConfigOptions.TestType.MapTest);
-										if (!activity.isExecuting()) {
-											activity.prepareTest(testCase);
-											activity.runTest(testCase);
-										}
+								map.setOnClickListener(v -> {
+									ConfigOptions.setTestType(getContext(), ConfigOptions.TestType.MapTest);
+									if (!activity.isExecuting()) {
+										activity.prepareTest(testCase);
+										activity.runTest(testCase);
 									}
 								});
-								globe.setOnClickListener(new View.OnClickListener() {
-									@Override
-									public void onClick(View v) {
-										ConfigOptions.setTestType(getContext(), ConfigOptions.TestType.GlobeTest);
-										if (!activity.isExecuting()) {
-											activity.prepareTest(testCase);
-											activity.runTest(testCase);
-										}
+								globe.setOnClickListener(v -> {
+									ConfigOptions.setTestType(getContext(), ConfigOptions.TestType.GlobeTest);
+									if (!activity.isExecuting()) {
+										activity.prepareTest(testCase);
+										activity.runTest(testCase);
 									}
 								});
 								break;
@@ -356,13 +315,10 @@ public class TestListFragment extends Fragment {
 								selected.setVisibility(View.INVISIBLE);
 								map.setVisibility(View.INVISIBLE);
 								globe.setVisibility(View.INVISIBLE);
-								itemView.setOnClickListener(new View.OnClickListener() {
-									@Override
-									public void onClick(View v) {
-										if (!activity.isExecuting()) {
-											activity.prepareTest(testCase);
-											activity.runTest(testCase);
-										}
+								itemView.setOnClickListener(v -> {
+									if (!activity.isExecuting()) {
+										activity.prepareTest(testCase);
+										activity.runTest(testCase);
 									}
 								});
 								break;
@@ -375,12 +331,11 @@ public class TestListFragment extends Fragment {
 						globe.setVisibility(View.INVISIBLE);
 						retry.setVisibility(View.INVISIBLE);
 						download.setVisibility(View.INVISIBLE);
-						switch (ConfigOptions.getExecutionMode(getContext())) {
+						switch (ConfigOptions.getExecutionMode(context)) {
 							case Multiple:
 								this.selected.setImageDrawable(getResources().getDrawable(R.drawable.ic_options_action));
 								break;
 							case Interactive:
-								break;
 							case Single:
 								break;
 						}

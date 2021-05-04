@@ -12,11 +12,7 @@ WhirlyGlobe-Maply is available for both iOS and Android.
 Getting Started
 ---
 
-If you're new to WhirlyGlobe-Maply, please go [read the main page](http://mousebird.github.com/WhirlyGlobe/).
-
-There's a [mailing list](http://eepurl.com/D30CD) for announcements. Join!
-
-Check out the [mousebird consulting blog](http://mousebirdconsulting.blogspot.com) for current progress.
+If you're new to WhirlyGlobe-Maply, please [read the main page](http://mousebird.github.com/WhirlyGlobe/). See More Information below for useful links and resources.
 
 There’s a tutorial for both iOS and Android:
 
@@ -26,7 +22,7 @@ There’s a tutorial for both iOS and Android:
 Builds
 ---
 
-This is the master branch of the WhirlyGlobe-Maply Component and API version 2.6. It should be easy to compile, as all the crazy dependencies are in submodules. You can also get a [precompiled version](http://mousebird.github.io/WhirlyGlobe/builds/builds.html) of 2.5. Anything newer needs to be compiled from source.
+This is the master branch of the WhirlyGlobe-Maply Component and API version 3.0. It should be easy to compile, as all the crazy dependencies are in submodules. You can also get a [precompiled version](http://mousebird.github.io/WhirlyGlobe/builds/builds.html) of 2.5. Anything newer needs to be compiled from source.
 
 WhirlyGlobe-Maply uses a bunch of submodules, which you'll need to get. Like so.
 
@@ -44,8 +40,10 @@ Want more detail? Go read the [Tutorials](http://mousebird.github.io/WhirlyGlobe
 More Information
 ---
 
-Follow us on Twitter:
+There's a [mailing list](http://eepurl.com/D30CD) for periodic announcements. Join!
 
-[@whrlyglobemaply](https://twitter.com/whrlyglobemaply)
+Check out the [mousebird consulting blog](http://mousebirdconsulting.blogspot.com) for current progress.
 
-Questions to: contact@mousebirdconsulting.com
+Follow us on Twitter: [@whrlyglobemaply](https://twitter.com/whrlyglobemaply)
+
+Email questions to: contact@mousebirdconsulting.com

@@ -20,6 +20,8 @@
 
 package com.mousebird.maply;
 
+import java.lang.ref.WeakReference;
+
 /**
  * The Map View handles math related to user position and orientation.
  * It's largely opaque to toolkit users.  The MaplyController handles
@@ -28,16 +30,16 @@ package com.mousebird.maply;
  */
 public class MapView extends View
 {	
-	private MapView()
+	protected MapView()
 	{
 	}
 
-	MapController control = null;
+	WeakReference<MapController> control;
 	double lastUpdated = 0.0;
 	
 	MapView(MapController inControl,CoordSystemDisplayAdapter inCoordAdapter)
 	{
-		control = inControl;
+		control = new WeakReference<MapController>(inControl);
 		coordAdapter = inCoordAdapter;
 		initialise(coordAdapter);
 	}
@@ -48,7 +50,7 @@ public class MapView extends View
 	 */
 	protected MapView clone()
 	{
-		MapView that = new MapView(control,coordAdapter);
+		MapView that = new MapView(control.get(),coordAdapter);
 		nativeClone(that);
 		return that;
 	}
@@ -59,7 +61,7 @@ public class MapView extends View
 	}
 	
 	// Return a view state for this Map View
-	@Override public ViewState makeViewState(MaplyRenderer renderer)
+	@Override public ViewState makeViewState(RenderController renderer)
 	{
 		return new MapViewState(this,renderer);
 	}
@@ -78,7 +80,8 @@ public class MapView extends View
 	{
 		synchronized (this) {
 			animationDelegate = delegate;
-			control.handleStartMoving(true);
+			if (control.get() != null)
+				control.get().handleStartMoving(true);
 		}
 	}
 	
@@ -89,14 +92,16 @@ public class MapView extends View
 			animationDelegate = null;
 		}
 
-		control.activity.runOnUiThread(
-				new Runnable() {
-					@Override
-					public void run() {
-						control.handleStopMoving(false);
+		if (control.get() != null)
+			control.get().activity.runOnUiThread(
+					new Runnable() {
+						@Override
+						public void run() {
+							if (control.get() != null)
+								control.get().handleStopMoving(false);
+						}
 					}
-				}
-		);
+			);
 	}
 	
 	// Called on the rendering thread right before we render
@@ -130,15 +135,23 @@ public class MapView extends View
 	// Set the view location from a Point3d
 	void setLoc(Point3d loc)
 	{
+		setLoc(loc,true);
+	}
+
+	// Set the view location from a Point3d
+	void setLoc(Point3d loc, boolean runViewUpdates)
+	{
 		double z = loc.getZ();
 		z = Math.min(maxHeightAboveSurface(), z);
 		z = Math.max(minHeightAboveSurface(), z);
-		
+
 		setLoc(loc.getX(),loc.getY(),z);
-		
-		runViewUpdates();
+
+		if (runViewUpdates) {
+			runViewUpdates();
+		}
 	}
-		
+
 	// Calculate the point on the view plane given the screen location
 	native Point3d pointOnPlaneFromScreen(Point2d screenPt,Matrix4d viewModelMatrix,Point2d frameSize,boolean clip);
 	// Calculate the point on the screen from a point on the view plane

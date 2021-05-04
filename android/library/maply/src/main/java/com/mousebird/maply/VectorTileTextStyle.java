@@ -31,16 +31,18 @@ import java.util.regex.Pattern;
  */
 public class VectorTileTextStyle extends VectorTileStyle {
 
-    private LabelInfo labelInfo;
-    private String textField;
-    private Point2d offset;
+    private final LabelInfo labelInfo;
+    private final String textField;
+    private final Point2d offset;
 
     public enum Placement {Point, Line};
 
     private Placement placement = Placement.Point;
 
-    public VectorTileTextStyle(LabelInfo labelInfo, Placement placement, Point2d offset, String textField, VectorStyleSettings settings, MaplyBaseController viewC) {
-        super(viewC);
+    public VectorTileTextStyle(String ident,String category,LabelInfo labelInfo,
+                               Placement placement,Point2d offset,String textField,
+                               VectorStyleSettings settings,RenderControllerInterface viewC) {
+        super(ident,category,viewC);
 
         this.labelInfo = labelInfo;
         this.placement = placement;
@@ -48,7 +50,7 @@ public class VectorTileTextStyle extends VectorTileStyle {
         this.offset = offset;
     }
 
-    public ComponentObject[] buildObjects(List<VectorObject> objects, MaplyTileID tileID, MaplyBaseController controller) {
+    public void buildObjects(VectorObject[] objects, VectorTileData tileData, RenderControllerInterface controller) {
 
         ArrayList<ScreenLabel> labels = new ArrayList<ScreenLabel>();
 
@@ -87,11 +89,8 @@ public class VectorTileTextStyle extends VectorTileStyle {
 
 
 
-        ComponentObject compObj = controller.addScreenLabels(labels, labelInfo, MaplyBaseController.ThreadMode.ThreadCurrent);
-        if (compObj != null) {
-            return new ComponentObject[]{compObj};
-        }
-        return null;
+        ComponentObject compObj = controller.addScreenLabels(labels, labelInfo, RenderController.ThreadMode.ThreadCurrent);
+        tileData.addComponentObject(compObj);
     }
 
     /**
@@ -128,17 +127,7 @@ public class VectorTileTextStyle extends VectorTileStyle {
 
                 matcher = pattern.matcher(formatString);
             }
-
-            // replace \n with a newline
-            // TODO: Do I need to do this?
-
-            // replace + and surrounding whitespace
-            // TODO: Do I need to do this?
-
-            // replace quotes around quoted strings
-            // TODO: Do I need to do this?
-
-
+            
             return formatString;
 
         } catch (Exception e) {
